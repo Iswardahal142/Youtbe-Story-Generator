@@ -700,16 +700,7 @@
       <button class="btn btn-ghost" style="font-size:12px;" onclick="clearLinkedSeason()">✕ Link Hatao</button>
     </div>
 
-    <!-- Saved Stories -->
-    <div class="ep-list-section" id="savedEpSection">
-      <div class="ep-list-header">
-        <span>📚 Saved Stories</span>
-        <span id="epCountBadge" style="color:var(--bone-dim);font-size:11px;"></span>
-      </div>
-      <div class="ep-list-body" id="setupEpList">
-        <div class="ep-empty">Koi story save nahi hua abhi</div>
-      </div>
-    </div>
+
 
   </div>
 </div>
@@ -880,79 +871,6 @@
       <div id="charsOutput"></div>
     </div>
 
-    <!-- ══ YOUTUBE EXPORT PANEL ══ -->
-    <div class="analysis-panel" id="panelYt" style="display:none;">
-
-      <!-- YT vs Story Comparison Card -->
-      <div class="analysis-generate-bar" style="background:#080000;border-color:#440000;" id="ytComparisonCard">
-        <div style="display:flex;align-items:center;gap:8px;padding:4px;color:#555;font-size:12px;">
-          <div class="spinner"></div> YouTube se check ho raha hai...
-        </div>
-      </div>
-
-      <!-- Checklist Card -->
-      <div class="analysis-generate-bar" style="background:#0a0000;border-color:#330000;">
-        <div style="font-size:10px;color:#ff4444;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;">✅ Upload Checklist</div>
-        <div id="ytChecklist" style="display:flex;flex-direction:column;gap:6px;">
-          <div class="yt-check-item" id="chk-story" onclick="toggleCheck('chk-story')"><span class="yt-check-icon">⬜</span><span>Story / Script ready hai</span></div>
-          <div class="yt-check-item" id="chk-narration" onclick="toggleCheck('chk-narration')"><span class="yt-check-icon">⬜</span><span>ElevenLabs Narration copy ho gayi</span></div>
-          <div class="yt-check-item" id="chk-thumbnail" onclick="toggleCheck('chk-thumbnail')"><span class="yt-check-icon">⬜</span><span>Thumbnail download / ready hai</span></div>
-          <div class="yt-check-item" id="chk-title" onclick="toggleCheck('chk-title')"><span class="yt-check-icon">⬜</span><span>YouTube Title select kar liya</span></div>
-          <div class="yt-check-item" id="chk-desc" onclick="toggleCheck('chk-desc')"><span class="yt-check-icon">⬜</span><span>Description copy ho gayi</span></div>
-          <div class="yt-check-item" id="chk-chapters" onclick="toggleCheck('chk-chapters')"><span class="yt-check-icon">⬜</span><span>Chapters/Timestamps note kar liye</span></div>
-          <div class="yt-check-item" id="chk-upload" onclick="toggleCheck('chk-upload')"><span class="yt-check-icon">⬜</span><span>Video YouTube pe upload ho gayi ✔</span></div>
-        </div>
-        <div style="margin-top:12px;">
-          <div class="wc-track" style="height:5px;"><div class="wc-fill" id="ytCheckFill" style="width:0%;background:linear-gradient(90deg,#440000,#ff4444);"></div></div>
-          <div id="ytCheckProgress" style="margin-top:6px;font-size:11px;color:#666;text-align:center;">0 / 7 complete</div>
-        </div>
-      </div>
-
-      <!-- Title Generator -->
-      <div class="analysis-generate-bar" style="background:#000a00;border-color:#003300;">
-        <div style="font-size:10px;color:#44bb66;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px;">🎯 YouTube Title Generator</div>
-        <div style="font-size:12px;color:#666;line-height:1.6;">7 clickbait Hindi titles AI se — high CTR ke liye</div>
-        <button class="btn btn-primary" id="genYtTitlesBtn" onclick="generateYtTitles()" style="background:linear-gradient(135deg,#005500,#002200);box-shadow:0 4px 16px rgba(0,150,0,0.3);">
-          🎯 Titles Generate Karo
-        </button>
-        <div id="ytTitlesOut"></div>
-      </div>
-
-      <!-- Description Generator -->
-      <div class="analysis-generate-bar" style="background:#00000a;border-color:#000033;">
-        <div style="font-size:10px;color:#4488ff;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px;">📝 Description + Tags</div>
-        <div style="font-size:12px;color:#666;line-height:1.6;">SEO-optimized Hindi description + hashtags ready-to-paste</div>
-        <button class="btn btn-primary" id="genYtDescBtn" onclick="generateYtDesc()" style="background:linear-gradient(135deg,#000055,#000033);box-shadow:0 4px 16px rgba(0,0,150,0.3);">
-          📝 Description Generate Karo
-        </button>
-        <div id="ytDescOut"></div>
-      </div>
-
-      <!-- Chapters Generator -->
-      <div class="analysis-generate-bar" style="background:#0a0800;border-color:#332200;">
-        <div style="font-size:10px;color:#ffaa00;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px;">⏱ Chapters / Timestamps</div>
-        <div style="font-size:12px;color:#666;line-height:1.6;margin-bottom:8px;">Story ke parts ke hisaab se YouTube chapters</div>
-        <input id="ytVideoLength" type="number" placeholder="Video ki length kitne minutes hai? (e.g. 12)" min="1" max="120"
-          style="background:#0f0f0f;border:1px solid #332200;color:var(--bone);padding:10px 12px;border-radius:8px;font-size:13px;outline:none;width:100%;font-family:'Noto Sans Devanagari',sans-serif;">
-        <button class="btn btn-primary" id="genYtChaptersBtn" onclick="generateYtChapters()" style="background:linear-gradient(135deg,#553300,#331100);box-shadow:0 4px 16px rgba(150,80,0,0.3);margin-top:8px;">
-          ⏱ Chapters Generate Karo
-        </button>
-        <div id="ytChaptersOut"></div>
-      </div>
-
-      <!-- Thumbnail Prompt Enhancer -->
-      <div class="analysis-generate-bar" style="background:#0a000a;border-color:#330033;">
-        <div style="font-size:10px;color:#cc88ff;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px;">🖼 Thumbnail Prompt Enhancer</div>
-        <div style="font-size:12px;color:#666;line-height:1.6;margin-bottom:8px;">Basic image prompt → YouTube viral thumbnail prompt (bold text, face close-up, clickbait style)</div>
-        <textarea id="ytThumbInput" placeholder="Koi bhi image prompt yahan paste karo (ya khali chhodo — story se auto banao)..." rows="3"
-          style="background:#0f0f0f;border:1px solid #330033;color:var(--bone);padding:10px 12px;border-radius:8px;font-size:13px;outline:none;width:100%;resize:none;font-family:'Noto Sans Devanagari',sans-serif;line-height:1.5;margin-bottom:8px;"></textarea>
-        <button class="btn btn-primary" id="genYtThumbBtn" onclick="enhanceThumbPrompt()" style="background:linear-gradient(135deg,#550055,#330033);box-shadow:0 4px 16px rgba(150,0,150,0.3);">
-          🖼 Thumbnail Prompt Enhance Karo
-        </button>
-        <div id="ytThumbOut"></div>
-      </div>
-
-    </div>
 
   </div>
 </div>
@@ -964,6 +882,87 @@
 <div class="toast" id="toast"></div>
 
 <!-- ══════ BOTTOM NAV ══════ -->
+<!-- ══════ SCREEN: YOUTUBE ══════ -->
+<div class="screen" id="screenYoutube">
+  <div class="mini-topbar">
+    <button class="hamburger-btn" onclick="openDrawer()">☰</button>
+    <span class="mini-topbar-title" style="color:#ff4444;">▶ YouTube Export</span>
+    <div style="width:36px;"></div>
+  </div>
+  <div style="flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:12px;">
+
+    <!-- YT vs Story Comparison Card -->
+    <div class="analysis-generate-bar" style="background:#080000;border-color:#440000;" id="ytComparisonCard">
+      <div style="display:flex;align-items:center;gap:8px;padding:4px;color:#555;font-size:12px;">
+        <div class="spinner"></div> YouTube se check ho raha hai...
+      </div>
+    </div>
+
+    <!-- Checklist Card -->
+    <div class="analysis-generate-bar" style="background:#0a0000;border-color:#330000;">
+      <div style="font-size:10px;color:#ff4444;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;">✅ Upload Checklist</div>
+      <div id="ytChecklist" style="display:flex;flex-direction:column;gap:6px;">
+        <div class="yt-check-item" id="chk-story" onclick="toggleCheck('chk-story')"><span class="yt-check-icon">⬜</span><span>Story / Script ready hai</span></div>
+        <div class="yt-check-item" id="chk-narration" onclick="toggleCheck('chk-narration')"><span class="yt-check-icon">⬜</span><span>ElevenLabs Narration copy ho gayi</span></div>
+        <div class="yt-check-item" id="chk-thumbnail" onclick="toggleCheck('chk-thumbnail')"><span class="yt-check-icon">⬜</span><span>Thumbnail download / ready hai</span></div>
+        <div class="yt-check-item" id="chk-title" onclick="toggleCheck('chk-title')"><span class="yt-check-icon">⬜</span><span>YouTube Title select kar liya</span></div>
+        <div class="yt-check-item" id="chk-desc" onclick="toggleCheck('chk-desc')"><span class="yt-check-icon">⬜</span><span>Description copy ho gayi</span></div>
+        <div class="yt-check-item" id="chk-chapters" onclick="toggleCheck('chk-chapters')"><span class="yt-check-icon">⬜</span><span>Chapters/Timestamps note kar liye</span></div>
+        <div class="yt-check-item" id="chk-upload" onclick="toggleCheck('chk-upload')"><span class="yt-check-icon">⬜</span><span>Video YouTube pe upload ho gayi ✔</span></div>
+      </div>
+      <div style="margin-top:12px;">
+        <div class="wc-track" style="height:5px;"><div class="wc-fill" id="ytCheckFill" style="width:0%;background:linear-gradient(90deg,#440000,#ff4444);"></div></div>
+        <div id="ytCheckProgress" style="margin-top:6px;font-size:11px;color:#666;text-align:center;">0 / 7 complete</div>
+      </div>
+    </div>
+
+    <!-- Title Generator -->
+    <div class="analysis-generate-bar" style="background:#000a00;border-color:#003300;">
+      <div style="font-size:10px;color:#44bb66;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px;">🎯 YouTube Title Generator</div>
+      <div style="font-size:12px;color:#666;line-height:1.6;">7 clickbait Hindi titles AI se — high CTR ke liye</div>
+      <button class="btn btn-primary" id="genYtTitlesBtn" onclick="generateYtTitles()" style="background:linear-gradient(135deg,#005500,#002200);box-shadow:0 4px 16px rgba(0,150,0,0.3);">
+        🎯 Titles Generate Karo
+      </button>
+      <div id="ytTitlesOut"></div>
+    </div>
+
+    <!-- Description Generator -->
+    <div class="analysis-generate-bar" style="background:#00000a;border-color:#000033;">
+      <div style="font-size:10px;color:#4488ff;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px;">📝 Description + Tags</div>
+      <div style="font-size:12px;color:#666;line-height:1.6;">SEO-optimized Hindi description + hashtags ready-to-paste</div>
+      <button class="btn btn-primary" id="genYtDescBtn" onclick="generateYtDesc()" style="background:linear-gradient(135deg,#000055,#000033);box-shadow:0 4px 16px rgba(0,0,150,0.3);">
+        📝 Description Generate Karo
+      </button>
+      <div id="ytDescOut"></div>
+    </div>
+
+    <!-- Chapters Generator -->
+    <div class="analysis-generate-bar" style="background:#0a0800;border-color:#332200;">
+      <div style="font-size:10px;color:#ffaa00;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px;">⏱ Chapters / Timestamps</div>
+      <div style="font-size:12px;color:#666;line-height:1.6;margin-bottom:8px;">Story ke parts ke hisaab se YouTube chapters</div>
+      <input id="ytVideoLength" type="number" placeholder="Video ki length kitne minutes hai? (e.g. 12)" min="1" max="120"
+        style="background:#0f0f0f;border:1px solid #332200;color:var(--bone);padding:10px 12px;border-radius:8px;font-size:13px;outline:none;width:100%;font-family:'Noto Sans Devanagari',sans-serif;">
+      <button class="btn btn-primary" id="genYtChaptersBtn" onclick="generateYtChapters()" style="background:linear-gradient(135deg,#553300,#331100);box-shadow:0 4px 16px rgba(150,80,0,0.3);margin-top:8px;">
+        ⏱ Chapters Generate Karo
+      </button>
+      <div id="ytChaptersOut"></div>
+    </div>
+
+    <!-- Thumbnail Prompt Enhancer -->
+    <div class="analysis-generate-bar" style="background:#0a000a;border-color:#330033;">
+      <div style="font-size:10px;color:#cc88ff;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px;">🖼 Thumbnail Prompt Enhancer</div>
+      <div style="font-size:12px;color:#666;line-height:1.6;margin-bottom:8px;">Basic image prompt → YouTube viral thumbnail prompt</div>
+      <textarea id="ytThumbInput" placeholder="Koi bhi image prompt yahan paste karo (ya khali chhodo — story se auto banao)..." rows="3"
+        style="background:#0f0f0f;border:1px solid #330033;color:var(--bone);padding:10px 12px;border-radius:8px;font-size:13px;outline:none;width:100%;resize:none;font-family:'Noto Sans Devanagari',sans-serif;line-height:1.5;margin-bottom:8px;"></textarea>
+      <button class="btn btn-primary" id="genYtThumbBtn" onclick="enhanceThumbPrompt()" style="background:linear-gradient(135deg,#550055,#330033);box-shadow:0 4px 16px rgba(150,0,150,0.3);">
+        🖼 Thumbnail Prompt Enhance Karo
+      </button>
+      <div id="ytThumbOut"></div>
+    </div>
+
+  </div>
+</div>
+
 <!-- ══════ SCREEN: MY STORIES ══════ -->
 <div class="screen" id="screenMyStories">
   <div class="mini-topbar">
