@@ -118,10 +118,29 @@ function _hideAuth() {
   if (window._appLoad) window._appLoad();
 }
 function _renderHeader(user) {
-  const av = document.getElementById('userAvatar');
-  const nm = document.getElementById('userName');
-  if (av && user.photoURL) av.src = user.photoURL;
-  if (nm) nm.textContent = user.displayName || user.email;
+  const av  = document.getElementById('userAvatar');
+  const avF = document.getElementById('userAvatarFallback');
+  const nm  = document.getElementById('userName');
+
+  const displayName = user.displayName || user.email || 'User';
+  if (nm) nm.textContent = displayName;
+
+  if (user.photoURL) {
+    // Show real photo
+    if (av)  { av.src = user.photoURL; av.style.display = 'block'; }
+    if (avF) avF.style.display = 'none';
+  } else {
+    // Gmail-style: colored circle with initial
+    if (av)  av.style.display = 'none';
+    if (avF) {
+      const initial = displayName.charAt(0).toUpperCase();
+      avF.textContent = initial;
+      avF.style.display = 'flex';
+      // Pick color based on initial char code
+      const colors = ['#8800aa','#c0392b','#1a6b8a','#27ae60','#d35400','#8e44ad'];
+      avF.style.background = colors[initial.charCodeAt(0) % colors.length];
+    }
+  }
 }
 function _showAuthErr(msg) {
   const el = document.getElementById('authError');
