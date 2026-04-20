@@ -236,13 +236,6 @@ async function ytTabComparison() {
       </div>
     </div>
 
-    <!-- Match pills -->
-    <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px;">
-      ${matchPill(titleMatch,  'Title match hua')}
-      ${matchPill(descMatch,   'Description match hui')}
-      ${matchPill(fullyMatch,  fullyMatch ? 'Video Uploaded ✓' : 'Video Not Uploaded')}
-    </div>
-
     <!-- Score bar -->
     <div style="background:rgba(255,255,255,0.04);border-radius:8px;padding:8px 10px;border:1px solid #1a1a1a;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
@@ -254,9 +247,47 @@ async function ytTabComparison() {
       </div>
     </div>
   `;
+  // ── Checklist mein auto-inject match results ──
+  _ytInjectChecklist('chk-title',  titleMatch,  'YouTube Title select kar liya',     'Title match hua ✓',       'Title match nahi hua');
+  _ytInjectChecklist('chk-desc',   descMatch,   'Description copy ho gayi',          'Description match hui ✓', 'Description match nahi hui');
+  _ytInjectChecklist('chk-upload', fullyMatch,  'Video YouTube pe upload ho gayi ✔', 'Video Uploaded ✓',        'Video Not Uploaded');
 }
 
-// ══ INIT — YT tab open hone par comparison run karo ══
+// ── Helper: checklist item ko auto-update karo match result se ──
+function _ytInjectChecklist(itemId, matched, defaultLabel, matchLabel, noMatchLabel) {
+  const el = document.getElementById(itemId);
+  if (!el) return;
+
+  const icon = el.querySelector('.yt-check-icon');
+  const text = el.querySelector('span:last-child');
+
+  if (matched) {
+    // Auto-check — green tint
+    el.style.background    = 'rgba(0,180,80,0.08)';
+    el.style.border        = '1px solid rgba(0,180,80,0.25)';
+    el.style.borderRadius  = '8px';
+    if (icon) icon.textContent = '✅';
+    if (text) {
+      text.textContent = matchLabel;
+      text.style.color = '#66dd99';
+    }
+    el.dataset.checked = 'true';
+  } else {
+    // Red tint — not matched
+    el.style.background    = 'rgba(200,0,0,0.06)';
+    el.style.border        = '1px solid rgba(200,0,0,0.18)';
+    el.style.borderRadius  = '8px';
+    if (icon) icon.textContent = '❌';
+    if (text) {
+      text.textContent = noMatchLabel;
+      text.style.color = '#ff7777';
+    }
+    el.dataset.checked = 'false';
+  }
+
+  // Progress bar update karo
+  if (typeof updateYtCheckProgress === 'function') updateYtCheckProgress();
+}
 // app.js ke bnavGo('youtube') ya goToYtExport ke baad call hoga
 window.ytTabComparison  = ytTabComparison;
 window.ytMatchMyStories = ytMatchMyStories;
