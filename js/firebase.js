@@ -5,12 +5,13 @@ import { getFirestore, doc, setDoc, getDoc, collection, getDocs, deleteDoc, quer
 import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 const firebaseConfig = {
-  apiKey:            "APNI_API_KEY_YAHAN",
-  authDomain:        "APNA_PROJECT.firebaseapp.com",
-  projectId:         "APNA_PROJECT_ID",
-  storageBucket:     "APNA_PROJECT.appspot.com",
-  messagingSenderId: "APNA_SENDER_ID",
-  appId:             "APNA_APP_ID"
+  apiKey: "AIzaSyC4G3cBS6fTmi7PXRrCbQPIkEbr-bh_470",
+  authDomain: "fir-c929f.firebaseapp.com",
+  projectId: "fir-c929f",
+  storageBucket: "fir-c929f.firebasestorage.app",
+  messagingSenderId: "82713990557",
+  appId: "1:82713990557:web:d4586900ad445cb8a2cb74",
+  measurementId: "G-SYRNS1D7BJ"
 };
 
 // ══ INIT ══
