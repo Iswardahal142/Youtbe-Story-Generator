@@ -189,10 +189,7 @@
 /* Story screen — bottom-bar already handles its own bottom, don't double pad */
 #screenStory { padding-bottom: 0; }
 
-/* topbar (story/thumb/analysis screens) must sit below userHeader */
-.topbar {
-  top: 46px !important;
-}
+/* topbar sits at top — no offset needed */
 
 
 /* ── Side Drawer ── */
@@ -725,6 +722,7 @@
     <span class="topbar-logo">☠ KAALI RAAT</span>
     <span class="topbar-ep" id="topbarEp">EP 01</span>
     <div class="topbar-actions">
+      <button class="btn btn-icon" title="Scenes & Characters" onclick="goToAnalysis()">🎬</button>
       <button class="btn btn-icon" title="Thumbnail" onclick="goToThumb()">🎨</button>
       <button class="btn btn-icon" title="YouTube Export" onclick="goToYtExport()" style="color:#ff4444;font-size:14px;font-weight:700;">YT</button>
       <button class="btn btn-icon" title="Save" onclick="saveCurrentEpisode()">💾</button>
