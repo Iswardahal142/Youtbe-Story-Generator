@@ -123,6 +123,10 @@ async function _appLoad() {
   await load();
   restoreSetupForm();
   renderSetupEpList();
+  // Show YT status dot on load
+  setTimeout(function() {
+    if (window.updateYtStatusBadge) updateYtStatusBadge();
+  }, 500);
 }
 window._appLoad = _appLoad;
 
