@@ -118,29 +118,45 @@ function _hideAuth() {
   if (window._appLoad) window._appLoad();
 }
 function _renderHeader(user) {
-  const av  = document.getElementById('userAvatar');
-  const avF = document.getElementById('userAvatarFallback');
-  const nm  = document.getElementById('userName');
-
   const displayName = user.displayName || user.email || 'User';
-  if (nm) nm.textContent = displayName;
+  const email       = user.email || '';
+  const initial     = displayName.charAt(0).toUpperCase();
+  const colors      = ['#8800aa','#c0392b','#1a6b8a','#27ae60','#d35400','#8e44ad'];
+  const color       = colors[initial.charCodeAt(0) % colors.length];
 
-  if (user.photoURL) {
-    // Show real photo
-    if (av)  { av.src = user.photoURL; av.style.display = 'block'; }
-    if (avF) avF.style.display = 'none';
-  } else {
-    // Gmail-style: colored circle with initial
-    if (av)  av.style.display = 'none';
-    if (avF) {
-      const initial = displayName.charAt(0).toUpperCase();
-      avF.textContent = initial;
-      avF.style.display = 'flex';
-      // Pick color based on initial char code
-      const colors = ['#8800aa','#c0392b','#1a6b8a','#27ae60','#d35400','#8e44ad'];
-      avF.style.background = colors[initial.charCodeAt(0) % colors.length];
-    }
+  // ── Drawer ──────────────────────────────────────
+  const dName  = document.getElementById('drawerName');
+  const dEmail = document.getElementById('drawerEmail');
+  const dAv    = document.getElementById('drawerAvatar');
+  const dAvF   = document.getElementById('drawerAvatarFallback');
+  if (dName)  dName.textContent  = displayName;
+  if (dEmail) dEmail.textContent = email;
+  if (user.photoURL && dAv && dAvF) {
+    dAv.src = user.photoURL; dAv.style.display = 'block'; dAvF.style.display = 'none';
+  } else if (dAvF) {
+    dAvF.textContent = initial; dAvF.style.background = color;
+    if (dAv) dAv.style.display = 'none'; dAvF.style.display = 'flex';
   }
+
+  // ── Profile screen ──────────────────────────────
+  const pName  = document.getElementById('profileName');
+  const pEmail = document.getElementById('profileEmail');
+  const pEmailD= document.getElementById('profileEmailDetail');
+  const pAv    = document.getElementById('profileAvatar');
+  const pAvF   = document.getElementById('profileAvatarFallback');
+  if (pName)   pName.textContent   = displayName;
+  if (pEmail)  pEmail.textContent  = email;
+  if (pEmailD) pEmailD.textContent = email;
+  if (user.photoURL && pAv && pAvF) {
+    pAv.src = user.photoURL; pAv.style.display = 'block'; pAvF.style.display = 'none';
+  } else if (pAvF) {
+    pAvF.textContent = initial; pAvF.style.background = color;
+    if (pAv) pAv.style.display = 'none'; pAvF.style.display = 'flex';
+  }
+
+  // ── Bottom nav profile icon — show avatar initial ──
+  const bnavIcon = document.getElementById('bnavProfileIcon');
+  if (bnavIcon) bnavIcon.textContent = initial;
 }
 function _showAuthErr(msg) {
   const el = document.getElementById('authError');
