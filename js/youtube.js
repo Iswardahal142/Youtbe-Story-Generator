@@ -1,35 +1,42 @@
 // ══ YOUTUBE PANEL ══
+
 // ══ CHANNEL NAME AUTO-FETCH ══
 async function ytAutoFetchChannelName() {
   try {
     const data = await fetch('/api/youtube').then(r => r.json());
     const name = data.channelName || '';
-    if (name) {
-      // state mein save karo
-      if (window.state) state.channel = name;
-      // Setup screen ka input update karo (readonly)
+    if (!name) return;
+
+    // state mein save karo — lekin sirf agar khali ho
+    if (window.state) {
+      // Pehle check karo ki state.channel already kuch aur set hai
+      // (setup screen se manually enter kiya ho toh overwrite nahi karo)
       const inp = document.getElementById('cfgChannel');
-      if (inp) {
-        inp.value = name;
-        inp.readOnly = true;
-        inp.style.cssText += ';opacity:0.6;cursor:not-allowed;background:#0a000a;border-color:#220022;';
-        // Label ke baad "auto" badge add karo
-        const label = inp.closest('.field')?.querySelector('label');
-        if (label && !label.querySelector('.yt-auto-badge')) {
-          const badge = document.createElement('span');
-          badge.className = 'yt-auto-badge';
-          badge.style.cssText = 'margin-left:6px;font-size:9px;color:#ff4444;background:rgba(200,0,0,0.12);border:1px solid #440000;padding:1px 6px;border-radius:10px;letter-spacing:1px;vertical-align:middle;';
-          badge.textContent = '▶ YouTube se auto';
-          label.appendChild(badge);
+      const manualVal = inp ? inp.value.trim() : '';
+      // Agar input empty hai ya already YouTube se set tha toh hi update karo
+      if (!manualVal || inp?.dataset.ytAuto === 'true') {
+        state.channel = name;
+        if (inp) {
+          inp.value = name;
+          inp.dataset.ytAuto = 'true';
+          inp.readOnly = true;
+          inp.style.cssText += ';opacity:0.6;cursor:not-allowed;background:#0a000a;border-color:#220022;';
+          const label = inp.closest('.field')?.querySelector('label');
+          if (label && !label.querySelector('.yt-auto-badge')) {
+            const badge = document.createElement('span');
+            badge.className = 'yt-auto-badge';
+            badge.style.cssText = 'margin-left:6px;font-size:9px;color:#ff4444;background:rgba(200,0,0,0.12);border:1px solid #440000;padding:1px 6px;border-radius:10px;letter-spacing:1px;vertical-align:middle;';
+            badge.textContent = '▶ YouTube se auto';
+            label.appendChild(badge);
+          }
         }
       }
     }
   } catch(e) {
-    // Silent fail — default value rehne do
+    // Silent fail
   }
 }
 
-// App load hone par auto-fetch karo
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => setTimeout(ytAutoFetchChannelName, 1500));
 } else {
@@ -37,11 +44,44 @@ if (document.readyState === 'loading') {
 }
 
 
+// ══ COLLAPSIBLE CARD HELPER ══
+function _ytMakeCollapsibleCard({ id, headerColor, headerLabel, defaultOpen = false }) {
+  const wrapper = document.createElement('div');
+  wrapper.className = 'analysis-generate-bar yt-collapse-card';
+  wrapper.style.cssText = `background:#080008;border-color:#330033;padding:0;overflow:hidden;border-radius:12px;`;
 
-// ── Checklist ──
+  const header = document.createElement('div');
+  header.style.cssText = `display:flex;align-items:center;justify-content:space-between;padding:14px 14px 12px;cursor:pointer;user-select:none;`;
+
+  const titleSpan = document.createElement('div');
+  titleSpan.style.cssText = `font-size:10px;color:${headerColor};letter-spacing:2px;text-transform:uppercase;font-weight:700;`;
+  titleSpan.textContent = headerLabel;
+
+  const arrow = document.createElement('span');
+  arrow.style.cssText = `font-size:14px;color:#444;transition:transform 0.2s;`;
+  arrow.textContent = defaultOpen ? '▲' : '▼';
+
+  header.appendChild(titleSpan);
+  header.appendChild(arrow);
+
+  const body = document.createElement('div');
+  body.style.cssText = `padding:0 14px 14px;display:${defaultOpen ? 'block' : 'none'};`;
+
+  header.onclick = function() {
+    const open = body.style.display !== 'none';
+    body.style.display = open ? 'none' : 'block';
+    arrow.textContent = open ? '▼' : '▲';
+  };
+
+  wrapper.appendChild(header);
+  wrapper.appendChild(body);
+  return { wrapper, body, titleSpan };
+}
+
+
+// ── Checklist (sirf YouTube-fetched items) ──
+// Manual toggleable items hata diye — sirf YouTube match se auto-update hoga
 const YT_CHECK_SK = 'kaali_raat_yt_checks';
-// These items are auto-managed — user can't manually toggle them
-const AUTO_MANAGED_CHECKS = ['chk-title', 'chk-desc', 'chk-thumbnail'];
 
 function getChecks() {
   try { return JSON.parse(localStorage.getItem(YT_CHECK_SK + '_' + (state.currentEpId||'x'))) || {}; } catch { return {}; }
@@ -49,42 +89,54 @@ function getChecks() {
 function saveChecks(c) {
   try { localStorage.setItem(YT_CHECK_SK + '_' + (state.currentEpId||'x'), JSON.stringify(c)); } catch {}
 }
-function toggleCheck(id) {
-  // Auto-managed items can't be manually toggled
-  if (AUTO_MANAGED_CHECKS.includes(id)) { toast('⚠️ Yeh auto-update hota hai — pehle generate karo'); return; }
-  const checks = getChecks();
-  checks[id] = !checks[id];
-  saveChecks(checks);
-  renderYtChecklist();
-}
-function renderYtChecklist() {
-  // Auto-sync status from generated flags
-  const s = _ytGetStatus();
-  const checks = getChecks();
-  if (s.title)     checks['chk-title']     = true;
-  if (s.desc)      checks['chk-desc']      = true;
-  if (s.thumbnail) checks['chk-thumbnail'] = true;
-  saveChecks(checks);
 
-  const ids = ['chk-story','chk-narration','chk-thumbnail','chk-title','chk-desc','chk-chapters','chk-upload'];
+// Sirf yeh 3 items hain — sab YouTube se auto
+const YT_CHECKLIST_ITEMS = [
+  { id: 'chk-title',    label: 'Title Match hua',             autoLabel: 'YouTube Title match hua ✓',     failLabel: 'Title match nahi hua' },
+  { id: 'chk-desc',     label: 'Description Match hui',       autoLabel: 'Description match hui ✓',       failLabel: 'Description match nahi hui' },
+  { id: 'chk-upload',   label: 'Video YouTube pe upload hui', autoLabel: 'Video Uploaded ✓',              failLabel: 'Video Not Uploaded yet' },
+];
+
+function renderYtChecklist() {
+  const checks = getChecks();
+  const container = document.getElementById('ytChecklist');
+  if (!container) return;
+  container.innerHTML = '';
+
   let done = 0;
-  ids.forEach(function(id) {
-    const el = document.getElementById(id);
-    if (!el) return;
-    const checked = !!checks[id];
-    const isAuto = AUTO_MANAGED_CHECKS.includes(id);
-    if (checked) { el.classList.add('checked'); el.querySelector('.yt-check-icon').textContent = '✅'; done++; }
-    else { el.classList.remove('checked'); el.querySelector('.yt-check-icon').textContent = '⬜'; }
-    // Visual hint for auto-managed items
-    el.style.opacity = isAuto && !checked ? '0.6' : '1';
-    el.title = isAuto ? (checked ? 'Auto-generated ✅' : 'Generate karne par auto-check hoga') : '';
+  YT_CHECKLIST_ITEMS.forEach(function(item) {
+    const checked = !!checks[item.id];
+    if (checked) done++;
+
+    const el = document.createElement('div');
+    el.className = 'yt-check-item' + (checked ? ' checked' : '');
+    el.id = item.id;
+    el.style.cssText = `display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;background:${checked ? 'rgba(0,180,80,0.07)' : 'rgba(200,0,0,0.05)'};border:1px solid ${checked ? 'rgba(0,180,80,0.2)' : 'rgba(200,0,0,0.12)'};`;
+
+    const icon = document.createElement('span');
+    icon.className = 'yt-check-icon';
+    icon.textContent = checked ? '✅' : '❌';
+
+    const text = document.createElement('span');
+    text.style.cssText = `font-size:12px;color:${checked ? '#66dd99' : '#ff7777'};flex:1;`;
+    text.textContent = checked ? item.autoLabel : item.failLabel;
+
+    const badge = document.createElement('span');
+    badge.style.cssText = `font-size:9px;padding:2px 7px;border-radius:20px;font-weight:700;background:rgba(255,255,255,0.05);color:#555;`;
+    badge.textContent = 'AUTO';
+
+    el.appendChild(icon);
+    el.appendChild(text);
+    el.appendChild(badge);
+    container.appendChild(el);
   });
+
   const fill = document.getElementById('ytCheckFill');
   const prog = document.getElementById('ytCheckProgress');
-  if (fill) fill.style.width = ((done/ids.length)*100) + '%';
+  if (fill) fill.style.width = ((done / YT_CHECKLIST_ITEMS.length) * 100) + '%';
   if (prog) {
-    prog.textContent = done + ' / ' + ids.length + ' complete' + (done === ids.length ? ' 🎉 Ready to upload!' : '');
-    prog.style.color = done === ids.length ? '#44bb66' : '#666';
+    prog.textContent = done + ' / ' + YT_CHECKLIST_ITEMS.length + ' complete' + (done === YT_CHECKLIST_ITEMS.length ? ' 🎉 Ready to upload!' : '');
+    prog.style.color = done === YT_CHECKLIST_ITEMS.length ? '#44bb66' : '#666';
   }
 }
 
@@ -145,27 +197,31 @@ JSON array format mein SIRF return karo:
     const clean = raw.replace(/```json|```/g,'').trim();
     const titles = JSON.parse(clean);
 
-    // Store all titles, show one at a time
     window._ytAllTitles = titles;
     window._ytTitleIdx = 0;
 
-    function showTitleAtIdx(idx) {
+    function showTitleCard(idx) {
       const t = window._ytAllTitles[idx];
       const card = document.createElement('div');
       card.className = 'yt-output-card';
+
       const label = document.createElement('div');
       label.style.cssText = 'font-size:10px;color:#44bb66;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;';
       label.textContent = '🎯 Title ' + (idx+1) + ' / ' + window._ytAllTitles.length;
       card.appendChild(label);
+
       const txt = document.createElement('div');
       txt.className = 'yt-title-text';
       txt.style.cssText = 'font-size:15px;font-weight:700;color:var(--bone);line-height:1.5;padding:10px 0;';
       txt.textContent = t;
       card.appendChild(txt);
+
       const btnRow = document.createElement('div');
       btnRow.style.cssText = 'display:flex;gap:8px;margin-top:4px;';
+
       const copyB = ytCopyBtn(t, '📋 Copy');
       copyB.style.flex = '1';
+
       const nextB = document.createElement('button');
       nextB.className = 'yt-copy-btn';
       nextB.style.cssText = 'flex:1;border-color:#553300;color:#ffaa44;';
@@ -175,20 +231,19 @@ JSON array format mein SIRF return karo:
         out.innerHTML = '';
         out.appendChild(showTitleCard(window._ytTitleIdx));
       };
+
       btnRow.appendChild(copyB);
       btnRow.appendChild(nextB);
       card.appendChild(btnRow);
       return card;
     }
 
-    function showTitleCard(idx) { return showTitleAtIdx(idx); }
-
     out.innerHTML = '';
-    out.appendChild(showTitleAtIdx(0));
+    out.appendChild(showTitleCard(0));
     toast('✅ Title ready! ➡️ se alag title dekho');
-    // Mark title as generated
     _ytSetStatus('title', true);
     updateYtStatusBadge();
+    renderYtChecklist();
   } catch (err) {
     out.innerHTML = '<div class="analysis-empty">❌ Error: ' + err.message + '</div>';
   }
@@ -252,7 +307,6 @@ PURE HINDI DEVANAGARI mein likho (tags/hashtags English ok hai)`
     const data = await res.json();
     const raw = data.choices?.[0]?.message?.content?.trim() || '';
 
-    // Parse sections
     const descMatch = raw.match(/---DESCRIPTION---([\s\S]*?)---TAGS---/);
     const tagsMatch = raw.match(/---TAGS---([\s\S]*?)---HASHTAGS---/);
     const hashMatch = raw.match(/---HASHTAGS---([\s\S]*?)---END---/);
@@ -265,7 +319,6 @@ PURE HINDI DEVANAGARI mein likho (tags/hashtags English ok hai)`
     const card = document.createElement('div');
     card.className = 'yt-output-card';
 
-    // Description section
     const descLabel = document.createElement('div');
     descLabel.style.cssText = 'font-size:10px;color:#4488ff;letter-spacing:2px;text-transform:uppercase;';
     descLabel.textContent = '📝 Description';
@@ -274,8 +327,7 @@ PURE HINDI DEVANAGARI mein likho (tags/hashtags English ok hai)`
     descBox.className = 'yt-desc-box';
     descBox.textContent = desc;
     card.appendChild(descBox);
-    const copyDescBtn = ytCopyBtn(desc, '📋 Description Copy');
-    card.appendChild(copyDescBtn);
+    card.appendChild(ytCopyBtn(desc, '📋 Description Copy'));
 
     if (hash) {
       const hashLabel = document.createElement('div');
@@ -305,7 +357,6 @@ PURE HINDI DEVANAGARI mein likho (tags/hashtags English ok hai)`
       card.appendChild(ytCopyBtn(tags, '📋 Tags Copy'));
     }
 
-    // Copy all button
     const copyAllRow = document.createElement('div');
     copyAllRow.style.cssText = 'border-top:1px solid #220000;padding-top:10px;margin-top:4px;';
     const copyAllBtn = ytCopyBtn(fullCopy, '📋 Sab Ek Saath Copy (Description + Tags + Hashtags)');
@@ -316,100 +367,14 @@ PURE HINDI DEVANAGARI mein likho (tags/hashtags English ok hai)`
     out.innerHTML = '';
     out.appendChild(card);
     toast('✅ Description ready!');
-    // Mark desc as generated
     _ytSetStatus('desc', true);
     updateYtStatusBadge();
+    renderYtChecklist();
   } catch (err) {
     out.innerHTML = '<div class="analysis-empty">❌ Error: ' + err.message + '</div>';
   }
   btn.disabled = false;
   btn.innerHTML = '🔄 Dobara Generate Karo';
-}
-
-// ── Chapters / Timestamps Generator ──
-async function generateYtChapters() {
-  if (!state.storyChunks.length) { toast('⚠️ Pehle story complete karo!'); return; }
-  const lenInput = document.getElementById('ytVideoLength');
-  const videoMins = parseFloat(lenInput.value) || 0;
-  if (!videoMins || videoMins < 1) { toast('⚠️ Video ki length (minutes) daalo!'); lenInput.focus(); return; }
-
-  const btn = document.getElementById('genYtChaptersBtn');
-  const out = document.getElementById('ytChaptersOut');
-  btn.disabled = true;
-  btn.innerHTML = '<div class="spinner"></div> Chapters ban rahe hain...';
-  out.innerHTML = '<div class="analysis-loading"><div class="spinner"></div>Timestamps calculate ho rahe hain...</div>';
-
-  const partsCount = state.storyChunks.length;
-  const partTitles = state.storyChunks.map(function(c, i) {
-    return 'Part ' + (i+1) + ': ' + c.text.slice(0,80) + '...';
-  }).join('\n');
-
-  try {
-    const res = await fetch('/api/ai', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'openai/gpt-4o-mini',
-        max_tokens: 500,
-        temperature: 0.5,
-        messages: [{
-          role: 'user',
-          content: `YouTube chapters/timestamps banao iss horror story ke liye.
-
-Story: "${state.title}" | ${state.epNum}
-Total video length: ${videoMins} minutes
-Story parts count: ${partsCount}
-
-Story parts summary:
-${partTitles}
-
-Rules:
-- Pehla chapter HAMESHA "0:00 Intro" hona chahiye
-- Last chapter "The End" hona chahiye
-- Total ${partsCount + 3} chapters banao (intro + story parts + end/outro)
-- Video time ${videoMins} minutes mein equally distribute karo
-- Chapter names Hindi mein (short, punchy, 3-5 words)
-- Format: MM:SS Chapter Name
-
-SIRF timestamps list return karo, koi extra text nahi. Example:
-0:00 Intro
-0:45 अंधेरी रात का आगाज़
-2:30 पुरानी हवेली में दाखिल
-...`
-        }]
-      })
-    });
-    const data = await res.json();
-    const chaptersText = data.choices?.[0]?.message?.content?.trim() || '';
-
-    const card = document.createElement('div');
-    card.className = 'yt-output-card';
-
-    const label = document.createElement('div');
-    label.style.cssText = 'font-size:10px;color:#ffaa00;letter-spacing:2px;text-transform:uppercase;';
-    label.textContent = '⏱ YouTube Chapters — Description mein paste karo';
-    card.appendChild(label);
-
-    const chapBox = document.createElement('div');
-    chapBox.className = 'yt-chapters-box';
-    chapBox.textContent = chaptersText;
-    card.appendChild(chapBox);
-
-    const hint = document.createElement('div');
-    hint.style.cssText = 'font-size:11px;color:#444;line-height:1.6;';
-    hint.textContent = '💡 Yeh text YouTube description mein paste karo — YouTube automatically chapters banata hai';
-    card.appendChild(hint);
-
-    card.appendChild(ytCopyBtn(chaptersText, '📋 Chapters Copy Karo'));
-
-    out.innerHTML = '';
-    out.appendChild(card);
-    toast('✅ Chapters ready!');
-  } catch (err) {
-    out.innerHTML = '<div class="analysis-empty">❌ Error: ' + err.message + '</div>';
-  }
-  btn.disabled = false;
-  btn.innerHTML = '⏱ Chapters Generate Karo';
 }
 
 // ── Thumbnail Prompt Enhancer ──
@@ -521,7 +486,6 @@ PROMPT 2:
     out.innerHTML = '';
     out.appendChild(card);
     toast('✅ Thumbnail prompts ready!');
-    // Mark thumbnail as generated
     _ytSetStatus('thumbnail', true);
     updateYtStatusBadge();
   } catch (err) {
@@ -531,7 +495,7 @@ PROMPT 2:
   btn.innerHTML = '🔄 Dobara Enhance Karo';
 }
 
-// ── Auto-open YT tab from story end banner ──
+// ── Auto-open YT tab ──
 function goToYtExport() {
   if (window.showScreen) showScreen('screenYoutube');
   if (window.bnavSetActive) bnavSetActive('youtube');
@@ -541,15 +505,11 @@ function goToYtExport() {
     if (window.ytTabComparison) window.ytTabComparison().catch(function(){});
   }, 300);
 }
+
 // ══ YT UPLOAD STATUS TRACKING ══
 const YT_STATUS_SK = 'kaali_raat_yt_status';
-
-function _ytStatusKey() {
-  return YT_STATUS_SK + '_' + (state.currentEpId || 'x');
-}
-function _ytGetStatus() {
-  try { return JSON.parse(localStorage.getItem(_ytStatusKey())) || {}; } catch { return {}; }
-}
+function _ytStatusKey() { return YT_STATUS_SK + '_' + (state.currentEpId || 'x'); }
+function _ytGetStatus() { try { return JSON.parse(localStorage.getItem(_ytStatusKey())) || {}; } catch { return {}; } }
 function _ytSetStatus(key, val) {
   const s = _ytGetStatus();
   s[key] = val;
@@ -563,7 +523,6 @@ function updateYtStatusBadge() {
   const hasDesc  = !!s.desc;
   const uploadDone = !!checks['chk-upload'];
 
-  // Bottom nav badge on YouTube button
   const ytBtn = document.getElementById('bnavYoutube');
   if (ytBtn) {
     let existing = ytBtn.querySelector('.yt-status-dot');
@@ -572,19 +531,10 @@ function updateYtStatusBadge() {
       existing.className = 'yt-status-dot';
       ytBtn.appendChild(existing);
     }
-    if (uploadDone) {
-      existing.style.background = '#44bb66'; // green = uploaded
-      existing.title = 'Uploaded ✅';
-    } else if (hasTitle && hasDesc) {
-      existing.style.background = '#ffcc44'; // yellow = ready
-      existing.title = 'Ready to upload';
-    } else {
-      existing.style.background = '#cc4444'; // red = missing
-      existing.title = 'Title/Desc missing';
-    }
+    if (uploadDone) { existing.style.background = '#44bb66'; existing.title = 'Uploaded ✅'; }
+    else if (hasTitle && hasDesc) { existing.style.background = '#ffcc44'; existing.title = 'Ready to upload'; }
+    else { existing.style.background = '#cc4444'; existing.title = 'Title/Desc missing'; }
   }
-
-  // Status card inside YT panel
   renderYtStatusCard();
 }
 
@@ -593,25 +543,19 @@ function renderYtStatusCard() {
   if (!card) return;
   const s      = _ytGetStatus();
   const checks = getChecks();
-
   const hasTitle   = !!s.title;
   const hasDesc    = !!s.desc;
-  const hasThumb   = !!checks['chk-thumbnail'];
+  const hasThumb   = !!s.thumbnail;
   const uploaded   = !!checks['chk-upload'];
-
   const rows = [
-    { label: '📝 Title', done: hasTitle,  miss: 'Title generate nahi hua — upar se banao' },
-    { label: '📄 Description', done: hasDesc, miss: 'Description generate nahi hua' },
-    { label: '🖼 Thumbnail', done: hasThumb, miss: 'Thumbnail abhi ready nahi' },
-    { label: '⬆️ Uploaded', done: uploaded, miss: 'YouTube pe upload pending hai' },
+    { label: '📝 Title',       done: hasTitle,  miss: 'Title generate nahi hua — upar se banao' },
+    { label: '📄 Description', done: hasDesc,   miss: 'Description generate nahi hua' },
+    { label: '🖼 Thumbnail',   done: hasThumb,  miss: 'Thumbnail prompt abhi ready nahi' },
+    { label: '⬆️ Uploaded',    done: uploaded,  miss: 'YouTube pe upload pending hai' },
   ];
-
   const allDone = rows.every(r => r.done);
-
   card.innerHTML = `
-    <div style="font-size:10px;color:#ff4444;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;">
-      📊 Upload Status — ${state.epNum || 'EP'}
-    </div>
+    <div style="font-size:10px;color:#ff4444;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;">📊 Upload Status — ${state.epNum || 'EP'}</div>
     ${rows.map(r => `
       <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #1a0000;">
         <span style="font-size:16px;">${r.done ? '✅' : '❌'}</span>
@@ -627,5 +571,4 @@ function renderYtStatusCard() {
   `;
 }
 
-// Call on YT tab open
 const _origRenderYtChecklist = window.renderYtChecklist || renderYtChecklist;
