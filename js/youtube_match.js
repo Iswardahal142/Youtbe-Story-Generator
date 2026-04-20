@@ -183,50 +183,75 @@ async function ytTabComparison() {
   const descMatch   = descScore   >= 30;
   const fullyMatch  = overallScore >= 60;
 
-  const check = (ok, label) =>
-    `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #1a0000;">
-      <span style="font-size:18px;">${ok ? '✅' : '❌'}</span>
-      <span style="font-size:13px;color:${ok ? '#aaa' : '#ddd'};">${label}</span>
-    </div>`;
-
   const videoDateStr = lastVideo.publishedAt
-    ? new Date(lastVideo.publishedAt).toLocaleDateString('hi-IN')
+    ? new Date(lastVideo.publishedAt).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' })
     : '';
 
+  const matchPill = (ok, label) => `
+    <div style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;background:${ok ? 'rgba(0,180,80,0.07)' : 'rgba(255,60,60,0.07)'};border:1px solid ${ok ? 'rgba(0,180,80,0.18)' : 'rgba(255,60,60,0.15)'};">
+      <div style="width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:11px;background:${ok ? 'rgba(0,200,80,0.15)' : 'rgba(255,60,60,0.15)'};">${ok ? '✓' : '✕'}</div>
+      <span style="font-size:12px;color:${ok ? '#66dd99' : '#ff7777'};font-weight:600;">${label}</span>
+      <span style="margin-left:auto;font-size:10px;font-weight:700;color:${ok ? '#00cc55' : '#cc3333'};background:${ok ? 'rgba(0,180,80,0.12)' : 'rgba(200,0,0,0.12)'};padding:2px 7px;border-radius:20px;">${ok ? 'YES' : 'NO'}</span>
+    </div>`;
+
+  const scoreColor = overallScore >= 60 ? '#00cc55' : overallScore >= 30 ? '#ffaa00' : '#cc3333';
+  const scoreWidth = Math.round(overallScore);
+
   container.innerHTML = `
-    <div style="font-size:10px;color:#ff4444;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;">
-      📺 Last Video vs Last Story
+    <!-- Header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:6px;">
+        <div style="width:3px;height:14px;background:#ff4444;border-radius:2px;"></div>
+        <span style="font-size:10px;color:#ff4444;letter-spacing:2px;text-transform:uppercase;font-weight:700;">Last Video vs Last Story</span>
+      </div>
+      <span style="font-size:10px;color:#444;">📊 Match</span>
     </div>
 
-    <!-- Last story info -->
-    <div style="background:#0a000a;border:1px solid #220022;border-radius:8px;padding:10px;margin-bottom:10px;">
-      <div style="font-size:10px;color:#666;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">📚 Last Story</div>
-      <div style="font-size:13px;font-weight:700;color:var(--bone);">${storyTitle}</div>
-      <div style="font-size:11px;color:#444;margin-top:2px;">${lastStory.season || ''} · ${lastStory.epNum || ''}</div>
-    </div>
-
-    <!-- Last video info -->
-    <div style="background:#0a0000;border:1px solid #220000;border-radius:8px;padding:10px;margin-bottom:12px;display:flex;gap:10px;align-items:flex-start;">
-      ${lastVideo.thumbnail
-        ? `<img src="${lastVideo.thumbnail}" style="width:72px;height:40px;object-fit:cover;border-radius:4px;flex-shrink:0;" onerror="this.style.display='none'">`
-        : ''}
+    <!-- Story row -->
+    <div style="display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px;background:rgba(80,0,80,0.12);border:1px solid #2a0028;margin-bottom:8px;">
+      <div style="width:36px;height:36px;border-radius:8px;background:rgba(120,0,120,0.3);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">📚</div>
       <div style="flex:1;overflow:hidden;">
-        <div style="font-size:10px;color:#666;letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">▶ Last YouTube Video</div>
+        <div style="font-size:9px;color:#666;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:2px;">Last Story</div>
+        <div style="font-size:13px;font-weight:700;color:#eee;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${storyTitle}</div>
+        <div style="font-size:10px;color:#554455;margin-top:1px;">${lastStory.season || 'Season 1'} · ${lastStory.epNum || 'EP 01'}</div>
+      </div>
+    </div>
+
+    <!-- YouTube video row -->
+    <div style="display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px;background:rgba(80,0,0,0.15);border:1px solid #2a0000;margin-bottom:14px;">
+      ${lastVideo.thumbnail
+        ? `<div style="position:relative;flex-shrink:0;">
+             <img src="${lastVideo.thumbnail}" style="width:72px;height:42px;object-fit:cover;border-radius:6px;display:block;" onerror="this.parentElement.innerHTML='<div style=width:72px;height:42px;border-radius:6px;background:#1a0000;display:flex;align-items:center;justify-content:center;font-size:20px;>▶</div>'">
+             <div style="position:absolute;bottom:3px;right:3px;background:rgba(0,0,0,0.8);border-radius:3px;padding:1px 4px;font-size:9px;color:#fff;font-weight:700;">YT</div>
+           </div>`
+        : `<div style="width:72px;height:42px;border-radius:6px;background:#1a0000;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">▶</div>`}
+      <div style="flex:1;overflow:hidden;">
+        <div style="font-size:9px;color:#666;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:2px;">Last YouTube Video</div>
         <div style="font-size:12px;font-weight:700;color:#ffaaaa;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${lastVideo.title}</div>
-        <div style="font-size:11px;color:#555;margin-top:2px;">
-          ${_ytFormatViews(lastVideo.viewCount)} views · ${videoDateStr}
+        <div style="display:flex;align-items:center;gap:6px;margin-top:3px;">
+          <span style="font-size:10px;color:#ff4444;font-weight:700;">▶ ${_ytFormatViews(lastVideo.viewCount)} views</span>
+          <span style="font-size:10px;color:#333;">·</span>
+          <span style="font-size:10px;color:#444;">${videoDateStr}</span>
         </div>
       </div>
     </div>
 
-    <!-- Match results -->
-    ${check(titleMatch,  'Title match hua')}
-    ${check(descMatch,   'Description match hui')}
-    ${check(fullyMatch,  fullyMatch ? '✨ Video Uploaded' : 'Video Not Uploaded')}
+    <!-- Match pills -->
+    <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px;">
+      ${matchPill(titleMatch,  'Title match hua')}
+      ${matchPill(descMatch,   'Description match hui')}
+      ${matchPill(fullyMatch,  fullyMatch ? 'Video Uploaded ✓' : 'Video Not Uploaded')}
+    </div>
 
-    <!-- Score hint -->
-    <div style="margin-top:10px;font-size:11px;color:#333;text-align:right;">
-      Match score: ${Math.round(overallScore)}%
+    <!-- Score bar -->
+    <div style="background:rgba(255,255,255,0.04);border-radius:8px;padding:8px 10px;border:1px solid #1a1a1a;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+        <span style="font-size:10px;color:#555;letter-spacing:1px;">MATCH SCORE</span>
+        <span style="font-size:13px;font-weight:700;color:${scoreColor};">${scoreWidth}%</span>
+      </div>
+      <div style="height:4px;background:#1a1a1a;border-radius:4px;overflow:hidden;">
+        <div style="height:100%;width:${scoreWidth}%;background:linear-gradient(90deg,${scoreColor}88,${scoreColor});border-radius:4px;transition:width 0.6s ease;"></div>
+      </div>
     </div>
   `;
 }
