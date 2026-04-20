@@ -491,7 +491,10 @@ async function endStoryNow() {
   save();
   saveCurrentEpisode(true);
   scrollToBottom();
-  // Auto-generate scenes after story ends
-  toast('🎬 Scenes auto-generate ho rahe hain...');
-  setTimeout(() => generateScenesAuto(), 1200);
+  // Auto-generate scenes + characters after story ends
+  toast('🎬 Scenes & Characters auto-generate ho rahe hain...');
+  setTimeout(async () => {
+    await generateScenesAuto();
+    await generateCharactersAuto();
+  }, 1200);
 }
