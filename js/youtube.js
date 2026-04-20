@@ -3,7 +3,7 @@
 async function ytAutoFetchChannelName() {
   try {
     const data = await fetch('/api/youtube').then(r => r.json());
-    const name = data.channelName || data.channel_name || '';
+    const name = data.channelName || '';
     if (name) {
       // state mein save karo
       if (window.state) state.channel = name;
