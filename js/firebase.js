@@ -1,10 +1,9 @@
-// ══ FIREBASE CONFIG ══
-// 🔴 APNA CONFIG YAHAN BHARO — firebase console → project settings → your apps
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, doc, setDoc, getDoc, collection, getDocs, deleteDoc, query, where, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+// ══════════════════════════════════════════════════
+//  KAALI RAAT — Firebase + Google Auth
+//  Apna Firebase config yahan fill karo (Step 4 dekho)
+// ══════════════════════════════════════════════════
 
-const firebaseConfig = {
+const FIREBASE_CONFIG = {
   apiKey: "AIzaSyC4G3cBS6fTmi7PXRrCbQPIkEbr-bh_470",
   authDomain: "fir-c929f.firebaseapp.com",
   projectId: "fir-c929f",
@@ -14,180 +13,214 @@ const firebaseConfig = {
   measurementId: "G-SYRNS1D7BJ"
 };
 
-// ══ INIT ══
-const app  = initializeApp(firebaseConfig);
-const db   = getFirestore(app);
-const auth = getAuth(app);
+// ── ALLOWED EMAILS (Whitelist) ──────────────────────
+// Jo emails is list mein hain SIRF woh login kar sakte hain.
+// Khali array = koi bhi Google account se login kar sakta hai.
+// Example: ["yourname@gmail.com", "friend@gmail.com"]
+const ALLOWED_EMAILS = [];
 
-// Current user ID (anonymous auth)
-let currentUID = null;
+// ── Firebase SDK Imports ────────────────────────────
+import { initializeApp }            from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  getAuth,
+  signInWithPopup,
+  GoogleAuthProvider,
+  onAuthStateChanged,
+  signOut
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import {
+  getFirestore,
+  doc, getDoc, setDoc, deleteDoc,
+  collection, getDocs,
+  query, orderBy, limit
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-// App ko Firebase ready hone ka wait karwao
-let firebaseReady = false;
-let firebaseReadyCallbacks = [];
+// ── Init ────────────────────────────────────────────
+const firebaseApp = initializeApp(FIREBASE_CONFIG);
+const auth        = getAuth(firebaseApp);
+const db          = getFirestore(firebaseApp);
+const provider    = new GoogleAuthProvider();
 
-function onFirebaseReady(cb) {
-  if (firebaseReady) { cb(); return; }
-  firebaseReadyCallbacks.push(cb);
-}
+let currentUser      = null;
+let _readyCallbacks  = [];
+let _dbReady         = false;
 
+// ── Auth State Listener ─────────────────────────────
 onAuthStateChanged(auth, async (user) => {
   if (user) {
-    currentUID = user.uid;
-  } else {
-    // Anonymous sign-in — bina login ke unique ID milegi
-    try {
-      const cred = await signInAnonymously(auth);
-      currentUID = cred.user.uid;
-    } catch (e) {
-      console.error('Firebase Auth error:', e);
-      // Fallback to localStorage if Firebase fails
-      currentUID = null;
+    // Whitelist check
+    if (ALLOWED_EMAILS.length > 0 && !ALLOWED_EMAILS.includes(user.email)) {
+      await signOut(auth);
+      _showAuthScreen();
+      _showAuthError("❌ Is email ko access nahi hai. Admin se sampark karo.");
+      return;
     }
+
+    currentUser = user;
+    _renderUserHeader(user);
+    _hideAuthScreen();
+
+    // Signal: DB ready
+    _dbReady = true;
+    _readyCallbacks.forEach(cb => cb());
+    _readyCallbacks = [];
+
+  } else {
+    currentUser = null;
+    _showAuthScreen();
   }
-  firebaseReady = true;
-  firebaseReadyCallbacks.forEach(cb => cb());
-  firebaseReadyCallbacks = [];
 });
 
-// ══ HELPERS ══
-function userDoc(path) {
-  // e.g. userDoc('state') → users/{uid}/state
-  // e.g. userDoc('episodes/ep123') → users/{uid}/episodes/ep123
-  const parts = path.split('/');
-  if (parts.length === 1) {
-    return doc(db, 'users', currentUID, parts[0], 'data');
-  }
-  return doc(db, 'users', currentUID, parts[0], parts[1]);
-}
+// ── Google Login ────────────────────────────────────
+window.googleLogin = async function () {
+  const btn = document.getElementById('googleLoginBtn');
+  const errEl = document.getElementById('authError');
+  if (errEl) errEl.style.display = 'none';
+  if (btn) { btn.disabled = true; btn.innerHTML = '⏳ Login ho raha hai...'; }
 
-function userCol(colName) {
-  return collection(db, 'users', currentUID, colName);
-}
-
-// ══ STATE FUNCTIONS ══
-async function dbSaveState(stateObj) {
-  if (!currentUID) { lsSaveState(stateObj); return; }
   try {
-    await setDoc(userDoc('state'), stateObj);
-  } catch (e) {
-    console.warn('Firestore save failed, using localStorage:', e);
-    lsSaveState(stateObj);
+    await signInWithPopup(auth, provider);
+    // onAuthStateChanged will handle the rest
+  } catch (err) {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = `
+        <svg width="18" height="18" viewBox="0 0 48 48">
+          <path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.2l6.7-6.7C35.7 2.3 30.2 0 24 0 14.7 0 6.7 5.4 2.7 13.3l7.8 6c1.8-5.4 6.8-9.8 13.5-9.8z"/>
+          <path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h12.7c-.5 2.9-2.2 5.3-4.7 6.9l7.3 5.7c4.3-4 6.8-9.9 7.2-16.6z"/>
+          <path fill="#FBBC05" d="M10.5 28.6A14.6 14.6 0 0 1 9.5 24c0-1.6.3-3.1.8-4.6l-7.8-6A24 24 0 0 0 0 24c0 3.9.9 7.5 2.7 10.7l7.8-6.1z"/>
+          <path fill="#34A853" d="M24 48c6.2 0 11.4-2 15.2-5.5l-7.3-5.7c-2 1.4-4.6 2.2-7.9 2.2-6.6 0-12.2-4.5-14.2-10.4l-7.8 6.1C6.7 42.6 14.7 48 24 48z"/>
+        </svg>
+        🔐 Google se Login Karo`;
+    }
+
+    let msg = "Login fail ho gaya. Dobara try karo.";
+    if (err.code === 'auth/popup-closed-by-user')   msg = "Popup band kar diya. Dobara try karo.";
+    if (err.code === 'auth/network-request-failed')  msg = "Internet check karo aur dobara try karo.";
+    if (err.code === 'auth/popup-blocked')           msg = "Popup block ho gaya — browser mein popup allow karo.";
+    _showAuthError("⚠️ " + msg);
   }
+};
+
+// ── Logout ──────────────────────────────────────────
+window.logoutUser = async function () {
+  if (!confirm("Logout karna chahte ho?")) return;
+  await signOut(auth);
+};
+
+// ── Internal UI Helpers ─────────────────────────────
+function _showAuthScreen() {
+  const auth = document.getElementById('authScreen');
+  const app  = document.getElementById('appContent');
+  if (auth) auth.style.display = 'flex';
+  if (app)  app.style.display  = 'none';
 }
 
-async function dbLoadState() {
-  if (!currentUID) return lsLoadState();
+function _hideAuthScreen() {
+  const authEl = document.getElementById('authScreen');
+  const appEl  = document.getElementById('appContent');
+  if (authEl) authEl.style.display = 'none';
+  if (appEl)  appEl.style.display  = '';
+  // Trigger main app init
+  if (window._appLoad) window._appLoad();
+}
+
+function _renderUserHeader(user) {
+  const avatar = document.getElementById('userAvatar');
+  const name   = document.getElementById('userName');
+  if (avatar && user.photoURL) avatar.src = user.photoURL;
+  if (name)   name.textContent = user.displayName || user.email;
+}
+
+function _showAuthError(msg) {
+  const el = document.getElementById('authError');
+  if (el) { el.textContent = msg; el.style.display = 'block'; }
+}
+
+// ── DB Ready Callback ───────────────────────────────
+window.db_onReady = function (cb) {
+  if (_dbReady) cb();
+  else _readyCallbacks.push(cb);
+};
+
+// ── Firestore Helpers ───────────────────────────────
+function _userDoc(...path) {
+  if (!currentUser) throw new Error('Not logged in');
+  return doc(db, 'users', currentUser.uid, ...path);
+}
+function _userCol(...path) {
+  if (!currentUser) throw new Error('Not logged in');
+  return collection(db, 'users', currentUser.uid, ...path);
+}
+
+// ── State ───────────────────────────────────────────
+window.db_saveState = async function (stateObj) {
+  try { await setDoc(_userDoc('meta', 'state'), stateObj, { merge: true }); }
+  catch (e) { console.warn('[db] state save fail', e); }
+};
+
+window.db_loadState = async function () {
   try {
-    const snap = await getDoc(userDoc('state'));
+    const snap = await getDoc(_userDoc('meta', 'state'));
     return snap.exists() ? snap.data() : null;
-  } catch (e) {
-    console.warn('Firestore load failed, using localStorage:', e);
-    return lsLoadState();
-  }
-}
+  } catch (e) { return null; }
+};
 
-// ══ EPISODE FUNCTIONS ══
-async function dbSaveEpisode(ep) {
-  if (!currentUID) { lsSaveEpisode(ep); return; }
+// ── Episodes ────────────────────────────────────────
+window.db_getEpisodes = async function () {
   try {
-    await setDoc(doc(db, 'users', currentUID, 'episodes', ep.id), ep);
-  } catch (e) {
-    console.warn('Firestore episode save failed:', e);
-    lsSaveEpisode(ep);
-  }
-}
+    const q    = query(_userCol('episodes'), orderBy('savedAt', 'desc'), limit(50));
+    const snap = await getDocs(q);
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  } catch (e) { return []; }
+};
 
-async function dbGetEpisodes() {
-  if (!currentUID) return lsGetEpisodes();
-  try {
-    const snap = await getDocs(userCol('episodes'));
-    const eps = [];
-    snap.forEach(d => eps.push(d.data()));
-    // Sort by savedAt desc
-    eps.sort((a, b) => (b.savedAt || 0) - (a.savedAt || 0));
-    return eps;
-  } catch (e) {
-    console.warn('Firestore episodes load failed:', e);
-    return lsGetEpisodes();
-  }
-}
+window.db_saveEpisode = async function (epId, epData) {
+  try { await setDoc(_userDoc('episodes', epId), epData, { merge: true }); }
+  catch (e) { console.warn('[db] ep save fail', e); }
+};
 
-async function dbDeleteEpisode(id) {
-  if (!currentUID) { lsDeleteEpisode(id); return; }
+window.db_getEpisode = async function (epId) {
   try {
-    await deleteDoc(doc(db, 'users', currentUID, 'episodes', id));
-  } catch (e) {
-    console.warn('Firestore delete failed:', e);
-    lsDeleteEpisode(id);
-  }
-}
+    const snap = await getDoc(_userDoc('episodes', epId));
+    return snap.exists() ? snap.data() : null;
+  } catch (e) { return null; }
+};
 
-async function dbDeleteEpisodesByTitle(title) {
-  if (!currentUID) { lsDeleteEpisodesByTitle(title); return; }
-  try {
-    const snap = await getDocs(userCol('episodes'));
-    const toDelete = [];
-    snap.forEach(d => { if (d.data().title === title) toDelete.push(d.id); });
-    await Promise.all(toDelete.map(id => deleteDoc(doc(db, 'users', currentUID, 'episodes', id))));
-  } catch (e) {
-    console.warn('Firestore bulk delete failed:', e);
-    lsDeleteEpisodesByTitle(title);
-  }
-}
+window.db_deleteEpisode = async function (epId) {
+  try { await deleteDoc(_userDoc('episodes', epId)); }
+  catch (e) { console.warn('[db] ep delete fail', e); }
+};
 
-// ══ USED IDEAS ══
-async function dbSaveUsedIdeas(ideas) {
-  if (!currentUID) { lsSaveUsedIdeas(ideas); return; }
+// ── Used Ideas (dedup) ──────────────────────────────
+window.db_getUsedIdeas = async function () {
   try {
-    await setDoc(userDoc('usedIdeas'), { list: ideas });
-  } catch (e) { lsSaveUsedIdeas(ideas); }
-}
-
-async function dbGetUsedIdeas() {
-  if (!currentUID) return lsGetUsedIdeas();
-  try {
-    const snap = await getDoc(userDoc('usedIdeas'));
+    const snap = await getDoc(_userDoc('meta', 'usedIdeas'));
     return snap.exists() ? (snap.data().list || []) : [];
-  } catch (e) { return lsGetUsedIdeas(); }
-}
+  } catch (e) { return []; }
+};
 
-// ══ LOCALSTORAGE FALLBACKS ══
-// Agar Firebase fail ho toh localStorage backup kaam karega
-const SK = 'kaali_raat_v2';
-function lsSaveState(s)    { try { localStorage.setItem(SK+'_state', JSON.stringify(s)); } catch {} }
-function lsLoadState()     { try { return JSON.parse(localStorage.getItem(SK+'_state')); } catch { return null; } }
-function lsGetEpisodes()   { try { return JSON.parse(localStorage.getItem(SK+'_eps')) || []; } catch { return []; } }
-function lsSaveEpisode(ep) {
-  try {
-    const eps = lsGetEpisodes();
-    const idx = eps.findIndex(e => e.id === ep.id);
-    if (idx !== -1) eps[idx] = ep; else eps.push(ep);
-    localStorage.setItem(SK+'_eps', JSON.stringify(eps));
-  } catch {}
-}
-function lsDeleteEpisode(id) {
-  try {
-    const eps = lsGetEpisodes().filter(e => e.id !== id);
-    localStorage.setItem(SK+'_eps', JSON.stringify(eps));
-  } catch {}
-}
-function lsDeleteEpisodesByTitle(title) {
-  try {
-    const eps = lsGetEpisodes().filter(e => e.title !== title);
-    localStorage.setItem(SK+'_eps', JSON.stringify(eps));
-  } catch {}
-}
-function lsSaveUsedIdeas(ideas) { try { localStorage.setItem(SK+'_usedIdeas', JSON.stringify(ideas)); } catch {} }
-function lsGetUsedIdeas()       { try { return JSON.parse(localStorage.getItem(SK+'_usedIdeas')) || []; } catch { return []; } }
+window.db_saveUsedIdeas = async function (list) {
+  try { await setDoc(_userDoc('meta', 'usedIdeas'), { list }, { merge: true }); }
+  catch (e) { console.warn('[db] usedIdeas save fail', e); }
+};
 
-// ══ EXPORTS — global functions jo baaki JS files use karengi ══
-window.db_onReady        = onFirebaseReady;
-window.db_saveState      = dbSaveState;
-window.db_loadState      = dbLoadState;
-window.db_saveEpisode    = dbSaveEpisode;
-window.db_getEpisodes    = dbGetEpisodes;
-window.db_deleteEpisode  = dbDeleteEpisode;
-window.db_deleteByTitle  = dbDeleteEpisodesByTitle;
-window.db_saveUsedIdeas  = dbSaveUsedIdeas;
-window.db_getUsedIdeas   = dbGetUsedIdeas;
+// ── Seasons ─────────────────────────────────────────
+window.db_getSeasons = async function () {
+  try {
+    const snap = await getDocs(_userCol('seasons'));
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  } catch (e) { return []; }
+};
+
+window.db_saveSeason = async function (seasonId, data) {
+  try { await setDoc(_userDoc('seasons', seasonId), data, { merge: true }); }
+  catch (e) { console.warn('[db] season save fail', e); }
+};
+
+window.db_getSeason = async function (seasonId) {
+  try {
+    const snap = await getDoc(_userDoc('seasons', seasonId));
+    return snap.exists() ? snap.data() : null;
+  } catch (e) { return null; }
+};
