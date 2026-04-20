@@ -2,6 +2,9 @@
 
 // ── Checklist ──
 const YT_CHECK_SK = 'kaali_raat_yt_checks';
+// These items are auto-managed — user can't manually toggle them
+const AUTO_MANAGED_CHECKS = ['chk-title', 'chk-desc', 'chk-thumbnail'];
+
 function getChecks() {
   try { return JSON.parse(localStorage.getItem(YT_CHECK_SK + '_' + (state.currentEpId||'x'))) || {}; } catch { return {}; }
 }
@@ -9,21 +12,34 @@ function saveChecks(c) {
   try { localStorage.setItem(YT_CHECK_SK + '_' + (state.currentEpId||'x'), JSON.stringify(c)); } catch {}
 }
 function toggleCheck(id) {
+  // Auto-managed items can't be manually toggled
+  if (AUTO_MANAGED_CHECKS.includes(id)) { toast('⚠️ Yeh auto-update hota hai — pehle generate karo'); return; }
   const checks = getChecks();
   checks[id] = !checks[id];
   saveChecks(checks);
   renderYtChecklist();
 }
 function renderYtChecklist() {
+  // Auto-sync status from generated flags
+  const s = _ytGetStatus();
   const checks = getChecks();
+  if (s.title)     checks['chk-title']     = true;
+  if (s.desc)      checks['chk-desc']      = true;
+  if (s.thumbnail) checks['chk-thumbnail'] = true;
+  saveChecks(checks);
+
   const ids = ['chk-story','chk-narration','chk-thumbnail','chk-title','chk-desc','chk-chapters','chk-upload'];
   let done = 0;
   ids.forEach(function(id) {
     const el = document.getElementById(id);
     if (!el) return;
     const checked = !!checks[id];
+    const isAuto = AUTO_MANAGED_CHECKS.includes(id);
     if (checked) { el.classList.add('checked'); el.querySelector('.yt-check-icon').textContent = '✅'; done++; }
     else { el.classList.remove('checked'); el.querySelector('.yt-check-icon').textContent = '⬜'; }
+    // Visual hint for auto-managed items
+    el.style.opacity = isAuto && !checked ? '0.6' : '1';
+    el.title = isAuto ? (checked ? 'Auto-generated ✅' : 'Generate karne par auto-check hoga') : '';
   });
   const fill = document.getElementById('ytCheckFill');
   const prog = document.getElementById('ytCheckProgress');
@@ -452,6 +468,9 @@ PROMPT 2:
     out.innerHTML = '';
     out.appendChild(card);
     toast('✅ Thumbnail prompts ready!');
+    // Mark thumbnail as generated
+    _ytSetStatus('thumbnail', true);
+    updateYtStatusBadge();
   } catch (err) {
     out.innerHTML = '<div class="analysis-empty">❌ Error: ' + err.message + '</div>';
   }
