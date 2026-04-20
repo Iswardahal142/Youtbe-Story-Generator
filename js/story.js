@@ -27,6 +27,12 @@ async function generateAiStoryIdea() {
     ? `Setting/genre: ${selectedGenre}`
     : 'Koi bhi horror setting (haveli, jungle, highway, gaon, school, supernatural, psychological — kuch bhi)';
 
+  // Top performing video ka context inject karo — trending niche pakadne ke liye
+  const topVid = window._ytTopVideoContext;
+  const topVideoHint = topVid
+    ? `\n\nCHANNEL KA TOP PERFORMING VIDEO (Rank #1, ${topVid.viewCount.toLocaleString()} views):\nTitle: "${topVid.title}"\nDescription: "${topVid.description}"\n\nIs video ki THEME, SETTING aur STYLE se inspired story banao — same niche pakdo jo channel par already viral ho raha hai. Exact copy mat karo, lekin usi direction mein jao.`
+    : '';
+
   try {
     const res = await fetch('/api/ai', {
       method: 'POST',
@@ -40,7 +46,7 @@ async function generateAiStoryIdea() {
           content: `You are a Hindi horror story title generator. Generate a unique Hindi horror story.
 
 Genre/Setting: ${genreHint}
-${avoidList}
+${avoidList}${topVideoHint}
 
 STRICT RULES:
 - Title MUST be in Hindi Devanagari script only. Example: "अंधेरे का राज", "काली हवेली", "भूतों की वापसी"
