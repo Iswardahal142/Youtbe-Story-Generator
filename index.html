@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Kaali Raat — Horror Story Studio</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Noto+Sans+Devanagari:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/components.css">
+<link rel="stylesheet" href="css/screens.css">
+</head>
+<body>
+
+<!-- ══════ SCREEN 0: SETUP ══════ -->
+<div class="screen active" id="screenSetup">
+  <div class="setup-card">
+    <div class="brand">
+      <span class="brand-skull">💀</span>
+      <span class="brand-name">KAALI RAAT</span>
+      <span class="brand-tagline">Horror Story Studio</span>
+    </div>
+
+    <!-- hidden inputs kept for compatibility -->
+    <div style="display:none;">
+      <input id="apiKeyInput">
+      <input id="cfgSeason">
+      <input id="cfgEp">
+      <input id="cfgTitle">
+      <textarea id="cfgPrompt"></textarea>
+    </div>
+
+    <!-- Basic Config -->
+    <div class="card-block">
+      <div class="card-title">🎬 Setup</div>
+      <div class="field">
+        <label>Channel Name</label>
+        <input type="text" id="cfgChannel" value="KAALI RAAT" maxlength="20">
+      </div>
+    </div>
+
+    <!-- AI Story Generator -->
+    <div class="card-block" id="aiGenCard">
+      <div class="card-title">🤖 AI Story Generator</div>
+      <div style="font-size:12px;color:var(--bone-dim);line-height:1.6;">
+        AI खुद एक unique horror story का <strong style="color:var(--bone);">शीर्षक</strong> generate करेगा — जो पहले कभी नहीं बना हो।
+      </div>
+
+      <!-- Genre chips -->
+      <div style="font-size:11px;color:var(--bone-dim);margin-bottom:4px;letter-spacing:1px;">GENRE / SETTING (optional)</div>
+      <div class="preset-chips" id="genreChips">
+        <div class="chip active" data-g="any">🎲 Kuch Bhi</div>
+        <div class="chip" data-g="haveli">🏚 Haveli</div>
+        <div class="chip" data-g="jungle">🌲 Jungle</div>
+        <div class="chip" data-g="highway">🌙 Highway</div>
+        <div class="chip" data-g="gaon">🏘 Gaon</div>
+        <div class="chip" data-g="school">🏫 School</div>
+        <div class="chip" data-g="supernatural">👻 Supernatural</div>
+        <div class="chip" data-g="psychological">🧠 Psychological</div>
+      </div>
+
+      <!-- AI Generated preview box -->
+      <div id="aiGenPreview" style="display:none;background:var(--panel2);border:1px solid var(--blood-d);border-radius:8px;padding:14px;margin-top:4px;">
+        <div style="font-size:10px;color:var(--blood);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;">✨ Story Title</div>
+        <div id="genTitlePreview" style="font-size:17px;font-weight:700;color:var(--bone);line-height:1.4;"></div>
+      </div>
+
+      <button class="btn btn-primary" id="genIdeaBtn" onclick="generateAiStoryIdea()" style="width:100%;padding:13px;font-size:14px;">
+        ✨ AI se Story Idea Generate Karo
+      </button>
+    </div>
+
+    <button class="btn btn-primary" id="startBtn" onclick="startStudio()" style="width:100%;padding:16px;font-size:15px;display:none;">
+      🎃 Episode 1 Shuru Karo
+    </button>
+
+    <!-- Link Previous Season -->
+    <div class="card-block" id="linkSeasonBlock" style="display:none;">
+      <div class="card-title">🔗 Previous Season Linked</div>
+      <div style="font-size:12px;color:var(--bone-dim);line-height:1.6;">Pichle season se characters aur story consistent rahegi.</div>
+      <div id="linkSeasonList"></div>
+      <button class="btn btn-ghost" style="font-size:12px;" onclick="clearLinkedSeason()">✕ Link Hatao</button>
+    </div>
+
+    <!-- Saved Stories -->
+    <div class="ep-list-section" id="savedEpSection">
+      <div class="ep-list-header">
+        <span>📚 Saved Stories</span>
+        <span id="epCountBadge" style="color:var(--bone-dim);font-size:11px;"></span>
+      </div>
+      <div class="ep-list-body" id="setupEpList">
+        <div class="ep-empty">Koi story save nahi hua abhi</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════ SCREEN 1: STORY WRITER ══════ -->
+<div class="screen" id="screenStory">
+
+  <div class="topbar">
+    <button class="btn btn-icon" onclick="goToSetup()">←</button>
+    <span class="topbar-logo">☠ KAALI RAAT</span>
+    <span class="topbar-ep" id="topbarEp">EP 01</span>
+    <div class="topbar-actions">
+      <button class="btn btn-icon" title="HF Settings" onclick="goToAnalysis(); setTimeout(()=>switchTab('el'),150)">⚙️</button>
+      <button class="btn btn-icon" title="Thumbnail" onclick="goToThumb()">🎨</button>
+      <button class="btn btn-icon" title="YouTube Export" onclick="goToYtExport()" style="color:#ff4444;font-size:14px;font-weight:700;">YT</button>
+      <button class="btn btn-icon" title="Save" onclick="saveCurrentEpisode()">💾</button>
+    </div>
+  </div>
+
+  <!-- Story chunks appear here -->
+  <div class="story-area" id="storyArea">
+    <div style="text-align:center;padding:40px 20px;color:#333;font-size:13px;">
+      Neeche "Continue Karo" dabao — AI story likhna shuru karega...
+    </div>
+  </div>
+
+  <!-- Word count bar -->
+  <div style="padding:0 16px 4px;background:var(--panel);border-top:1px solid var(--border);">
+    <div class="wordcount-bar">
+      <span class="wc-label">0 words</span>
+      <div class="wc-track"><div class="wc-fill" id="wcFill" style="width:0%"></div></div>
+      <span class="wc-label" id="wcTarget">/ ~1500</span>
+    </div>
+  </div>
+
+  <!-- Bottom bar -->
+  <div class="bottom-bar">
+    <!-- Quick action chips -->
+    <div class="action-chips">
+      <div class="action-chip" onclick="setPromptHint('Aur tension badhao, kuch bura hone wala hai')">😱 Tension Badhao</div>
+      <div class="action-chip" onclick="setPromptHint('Ek creepy turn aao story mein')">👻 Creepy Turn</div>
+      <div class="action-chip" onclick="setPromptHint('Character ko aur describe karo')">👤 Character</div>
+      <div class="action-chip" onclick="setPromptHint('Scene ka atmosphere aur dark karo')">🌑 Dark Karo</div>
+      <div class="action-chip" onclick="setPromptHint('Dialog likhao characters ke beech')">💬 Dialog</div>
+      <div class="action-chip" onclick="setPromptHint('Ek shocking revelation aao')">⚡ Twist!</div>
+      <div class="action-chip" onclick="endStoryNow()">🔚 Story End Karo</div>
+    </div>
+
+    <!-- Prompt input row -->
+    <div class="prompt-row">
+      <textarea class="prompt-input" id="promptInput"
+        placeholder="Kuch direction do (optional)... ya khali chhodo"
+        rows="1"
+        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendContinue();}"
+      ></textarea>
+      <button class="send-btn" id="sendBtn" onclick="sendContinue()">▶</button>
+    </div>
+
+    <!-- Continue / End buttons -->
+    <div style="display:flex;gap:8px;">
+      <button class="continue-btn" id="continueBtn" onclick="sendContinue()">
+        <span>📖 Continue Karo</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- End story banner -->
+  <div class="end-banner" id="endBanner" style="margin:0 16px 16px;">
+    <div class="end-banner-title">🩸 The End 🩸</div>
+    <div class="end-banner-sub" id="endBannerSub">Episode complete!</div>
+    <div class="btn-row" style="flex-wrap:wrap;gap:8px;">
+      <button class="btn btn-primary" onclick="startNextEpisode()">▶ Next Episode</button>
+      <button class="btn btn-primary" onclick="generateFullNarration()" style="background:linear-gradient(135deg,#005500,#003300);">🎙 Full Narration Generate Karo</button>
+      <button class="btn btn-ghost" onclick="goToThumb()">🎨 Thumbnail</button>
+      <button class="btn btn-ghost" onclick="goToAnalysis()">🔍 Scene & Characters</button>
+      <button class="btn btn-ghost" id="bibleBtn" onclick="generateSeasonBible()">📖 Season Bible</button>
+      <button class="btn btn-ghost" onclick="startNextSeason()">🔄 Next Season</button>
+      <button class="btn btn-primary" onclick="goToYtExport()" style="background:linear-gradient(135deg,#cc0000,#880000);border:none;flex:unset;width:100%;">▶ YouTube Export — Titles, Description, Chapters</button>
+    </div>
+    <div id="bibleOutput" style="display:none;background:#0a000a;border:1px solid #440044;border-radius:8px;padding:12px;font-size:12px;color:#cc88ff;line-height:1.7;text-align:left;"></div>
+    <div id="narrationOutput" style="display:none;background:#000a00;border:1px solid #004400;border-radius:8px;padding:14px;margin-top:4px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <div style="font-size:10px;color:#44bb66;letter-spacing:2px;text-transform:uppercase;">🎙 Full Episode Narration — ElevenLabs Ready</div>
+        <button id="regenNarrationBtn" class="img-copy-btn" onclick="generateFullNarration(true)" style="display:none;font-size:10px;padding:4px 10px;border-color:#555;color:#888;">🔄 Dobara Banao</button>
+      </div>
+      <div id="narrationText" style="font-size:14px;color:#c8e8c8;line-height:1.9;white-space:pre-wrap;"></div>
+      <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
+        <button class="img-copy-btn" onclick="copyNarration()" style="border-color:#44bb66;color:#44bb66;">📋 ElevenLabs ke liye Copy Karo</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══════ SCREEN 2: THUMBNAIL PROMPT ══════ -->
+<div class="screen" id="screenThumb">
+  <div class="thumb-topbar">
+    <button class="btn btn-icon" onclick="showScreen('screenStory')">←</button>
+    <span class="thumb-topbar-title">🎨 Thumbnail Prompt</span>
+  </div>
+
+  <div class="thumb-content">
+
+    <!-- Style selector -->
+    <div class="card-block">
+      <div class="card-title">🎨 Thumbnail Style</div>
+      <div class="preset-chips" id="thumbStyleChips">
+        <div class="chip active" data-s="cinematic">🎬 Cinematic</div>
+        <div class="chip" data-s="anime">⛩ Horror Anime</div>
+        <div class="chip" data-s="realistic">📷 Realistic</div>
+        <div class="chip" data-s="cartoon">🎭 2D Cartoon</div>
+        <div class="chip" data-s="painting">🖼 Dark Painting</div>
+      </div>
+    </div>
+
+    <!-- Aspect ratio -->
+    <div class="card-block">
+      <div class="card-title">📐 Platform</div>
+      <div class="preset-chips" id="thumbPlatChips">
+        <div class="chip active" data-p="YouTube thumbnail 16:9, 1280x720">▶ YouTube</div>
+        <div class="chip" data-p="Instagram post 1:1 square">📷 Instagram</div>
+        <div class="chip" data-p="Instagram Reels / YouTube Shorts vertical 9:16">📱 Shorts/Reels</div>
+      </div>
+    </div>
+
+    <!-- Generate button -->
+    <button class="btn btn-primary" id="genThumbBtn" onclick="generateThumbPrompt()" style="width:100%;padding:14px;">
+      ✨ AI se Prompt Generate Karo
+    </button>
+
+    <!-- Output -->
+    <div id="thumbPromptOut"></div>
+
+  </div>
+</div>
+
+<!-- ══════ SCREEN 3: ANALYSIS ══════ -->
+<div class="screen" id="screenAnalysis">
+
+  <div class="topbar">
+    <button class="btn btn-icon" onclick="showScreen('screenStory')">←</button>
+    <span class="topbar-logo">🔍 ANALYSIS</span>
+    <div style="margin-left:auto;display:flex;gap:8px;">
+      <button class="btn btn-ghost" style="padding:8px 12px;font-size:12px;" onclick="goToThumb()">🎨 Thumbnail</button>
+    </div>
+  </div>
+
+  <div class="analysis-content" id="analysisContent">
+
+    <!-- Tab bar -->
+    <div class="analysis-tabs">
+      <button class="atab active" id="tabScenes" onclick="switchTab('scenes')">🎬 Scenes</button>
+      <button class="atab" id="tabChars" onclick="switchTab('chars')">👤 Characters</button>
+      <button class="atab" id="tabYt" onclick="switchTab('yt')" style="background:linear-gradient(135deg,#1a0000,#0a0000);border:1px solid #cc0000;color:#ff4444;border-radius:8px;position:relative;">▶ YT Export</button>
+    </div>
+
+    <!-- Scenes Panel -->
+    <div class="analysis-panel" id="panelScenes">
+      <div class="analysis-generate-bar">
+        <div class="analysis-hint">Story ke saare scenes ek-ek karke breakdown milegi — location, mood, kya hua.</div>
+        <button class="btn btn-primary" id="genScenesBtn" onclick="generateScenes()" style="width:100%;">
+          🎬 Scene Breakdown Generate Karo
+        </button>
+      </div>
+      <div id="scenesOutput"></div>
+    </div>
+
+    <!-- Characters Panel -->
+    <div class="analysis-panel" id="panelChars" style="display:none;">
+      <div class="analysis-generate-bar">
+        <div class="analysis-hint">Story mein jo bhi characters hain — unka naam, role, description aur kab aaye.</div>
+        <button class="btn btn-primary" id="genCharsBtn" onclick="generateCharacters()" style="width:100%;">
+          👤 Character List Generate Karo
+        </button>
+      </div>
+      <div id="charsOutput"></div>
+    </div>
+
+    <!-- ══ YOUTUBE EXPORT PANEL ══ -->
+    <div class="analysis-panel" id="panelYt" style="display:none;">
+
+      <!-- Checklist Card -->
+      <div class="analysis-generate-bar" style="background:#0a0000;border-color:#330000;">
+        <div style="font-size:10px;color:#ff4444;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;">✅ Upload Checklist</div>
+        <div id="ytChecklist" style="display:flex;flex-direction:column;gap:6px;">
+          <div class="yt-check-item" id="chk-story" onclick="toggleCheck('chk-story')"><span class="yt-check-icon">⬜</span><span>Story / Script ready hai</span></div>
+          <div class="yt-check-item" id="chk-narration" onclick="toggleCheck('chk-narration')"><span class="yt-check-icon">⬜</span><span>ElevenLabs Narration copy ho gayi</span></div>
+          <div class="yt-check-item" id="chk-thumbnail" onclick="toggleCheck('chk-thumbnail')"><span class="yt-check-icon">⬜</span><span>Thumbnail download / ready hai</span></div>
+          <div class="yt-check-item" id="chk-title" onclick="toggleCheck('chk-title')"><span class="yt-check-icon">⬜</span><span>YouTube Title select kar liya</span></div>
+          <div class="yt-check-item" id="chk-desc" onclick="toggleCheck('chk-desc')"><span class="yt-check-icon">⬜</span><span>Description copy ho gayi</span></div>
+          <div class="yt-check-item" id="chk-chapters" onclick="toggleCheck('chk-chapters')"><span class="yt-check-icon">⬜</span><span>Chapters/Timestamps note kar liye</span></div>
+          <div class="yt-check-item" id="chk-upload" onclick="toggleCheck('chk-upload')"><span class="yt-check-icon">⬜</span><span>Video YouTube pe upload ho gayi ✔</span></div>
+        </div>
+        <div style="margin-top:12px;">
+          <div class="wc-track" style="height:5px;"><div class="wc-fill" id="ytCheckFill" style="width:0%;background:linear-gradient(90deg,#440000,#ff4444);"></div></div>
+          <div id="ytCheckProgress" style="margin-top:6px;font-size:11px;color:#666;text-align:center;">0 / 7 complete</div>
+        </div>
+      </div>
+
+      <!-- Title Generator -->
+      <div class="analysis-generate-bar" style="background:#000a00;border-color:#003300;">
+        <div style="font-size:10px;color:#44bb66;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px;">🎯 YouTube Title Generator</div>
+        <div style="font-size:12px;color:#666;line-height:1.6;">7 clickbait Hindi titles AI se — high CTR ke liye</div>
+        <button class="btn btn-primary" id="genYtTitlesBtn" onclick="generateYtTitles()" style="background:linear-gradient(135deg,#005500,#002200);box-shadow:0 4px 16px rgba(0,150,0,0.3);">
+          🎯 Titles Generate Karo
+        </button>
+        <div id="ytTitlesOut"></div>
+      </div>
+
+      <!-- Description Generator -->
+      <div class="analysis-generate-bar" style="background:#00000a;border-color:#000033;">
+        <div style="font-size:10px;color:#4488ff;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px;">📝 Description + Tags</div>
+        <div style="font-size:12px;color:#666;line-height:1.6;">SEO-optimized Hindi description + hashtags ready-to-paste</div>
+        <button class="btn btn-primary" id="genYtDescBtn" onclick="generateYtDesc()" style="background:linear-gradient(135deg,#000055,#000033);box-shadow:0 4px 16px rgba(0,0,150,0.3);">
+          📝 Description Generate Karo
+        </button>
+        <div id="ytDescOut"></div>
+      </div>
+
+      <!-- Chapters Generator -->
+      <div class="analysis-generate-bar" style="background:#0a0800;border-color:#332200;">
+        <div style="font-size:10px;color:#ffaa00;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px;">⏱ Chapters / Timestamps</div>
+        <div style="font-size:12px;color:#666;line-height:1.6;margin-bottom:8px;">Story ke parts ke hisaab se YouTube chapters</div>
+        <input id="ytVideoLength" type="number" placeholder="Video ki length kitne minutes hai? (e.g. 12)" min="1" max="120"
+          style="background:#0f0f0f;border:1px solid #332200;color:var(--bone);padding:10px 12px;border-radius:8px;font-size:13px;outline:none;width:100%;font-family:'Noto Sans Devanagari',sans-serif;">
+        <button class="btn btn-primary" id="genYtChaptersBtn" onclick="generateYtChapters()" style="background:linear-gradient(135deg,#553300,#331100);box-shadow:0 4px 16px rgba(150,80,0,0.3);margin-top:8px;">
+          ⏱ Chapters Generate Karo
+        </button>
+        <div id="ytChaptersOut"></div>
+      </div>
+
+      <!-- Thumbnail Prompt Enhancer -->
+      <div class="analysis-generate-bar" style="background:#0a000a;border-color:#330033;">
+        <div style="font-size:10px;color:#cc88ff;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px;">🖼 Thumbnail Prompt Enhancer</div>
+        <div style="font-size:12px;color:#666;line-height:1.6;margin-bottom:8px;">Basic image prompt → YouTube viral thumbnail prompt (bold text, face close-up, clickbait style)</div>
+        <textarea id="ytThumbInput" placeholder="Koi bhi image prompt yahan paste karo (ya khali chhodo — story se auto banao)..." rows="3"
+          style="background:#0f0f0f;border:1px solid #330033;color:var(--bone);padding:10px 12px;border-radius:8px;font-size:13px;outline:none;width:100%;resize:none;font-family:'Noto Sans Devanagari',sans-serif;line-height:1.5;margin-bottom:8px;"></textarea>
+        <button class="btn btn-primary" id="genYtThumbBtn" onclick="enhanceThumbPrompt()" style="background:linear-gradient(135deg,#550055,#330033);box-shadow:0 4px 16px rgba(150,0,150,0.3);">
+          🖼 Thumbnail Prompt Enhance Karo
+        </button>
+        <div id="ytThumbOut"></div>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+<!-- Scroll FAB -->
+<div class="scroll-fab" id="scrollFab" onclick="scrollToBottom()">↓</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- Firebase — type="module" zaroori hai -->
+<script type="module" src="js/firebase.js"></script>
+
+<!-- App scripts — defer so Firebase loads first -->
+<script defer src="js/state.js"></script>
+<script defer src="js/story.js"></script>
+<script defer src="js/analysis.js"></script>
+<script defer src="js/youtube.js"></script>
+<script defer src="js/app.js"></script>
+</body>
+</html>
