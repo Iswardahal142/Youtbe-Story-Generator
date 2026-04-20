@@ -117,6 +117,9 @@ JSON array format mein SIRF return karo:
     out.innerHTML = '';
     out.appendChild(card);
     toast('✅ 7 titles ready!');
+    // Mark title as generated
+    _ytSetStatus('title', true);
+    updateYtStatusBadge();
   } catch (err) {
     out.innerHTML = '<div class="analysis-empty">❌ Error: ' + err.message + '</div>';
   }
@@ -244,6 +247,9 @@ PURE HINDI DEVANAGARI mein likho (tags/hashtags English ok hai)`
     out.innerHTML = '';
     out.appendChild(card);
     toast('✅ Description ready!');
+    // Mark desc as generated
+    _ytSetStatus('desc', true);
+    updateYtStatusBadge();
   } catch (err) {
     out.innerHTML = '<div class="analysis-empty">❌ Error: ' + err.message + '</div>';
   }
@@ -461,3 +467,91 @@ function goToYtExport() {
     if (window.bnavSetActive) bnavSetActive('youtube');
   }, 150);
 }
+// ══ YT UPLOAD STATUS TRACKING ══
+const YT_STATUS_SK = 'kaali_raat_yt_status';
+
+function _ytStatusKey() {
+  return YT_STATUS_SK + '_' + (state.currentEpId || 'x');
+}
+function _ytGetStatus() {
+  try { return JSON.parse(localStorage.getItem(_ytStatusKey())) || {}; } catch { return {}; }
+}
+function _ytSetStatus(key, val) {
+  const s = _ytGetStatus();
+  s[key] = val;
+  try { localStorage.setItem(_ytStatusKey(), JSON.stringify(s)); } catch {}
+}
+
+function updateYtStatusBadge() {
+  const s      = _ytGetStatus();
+  const checks = getChecks();
+  const hasTitle = !!s.title;
+  const hasDesc  = !!s.desc;
+  const uploadDone = !!checks['chk-upload'];
+
+  // Bottom nav badge on YouTube button
+  const ytBtn = document.getElementById('bnavYoutube');
+  if (ytBtn) {
+    let existing = ytBtn.querySelector('.yt-status-dot');
+    if (!existing) {
+      existing = document.createElement('span');
+      existing.className = 'yt-status-dot';
+      ytBtn.appendChild(existing);
+    }
+    if (uploadDone) {
+      existing.style.background = '#44bb66'; // green = uploaded
+      existing.title = 'Uploaded ✅';
+    } else if (hasTitle && hasDesc) {
+      existing.style.background = '#ffcc44'; // yellow = ready
+      existing.title = 'Ready to upload';
+    } else {
+      existing.style.background = '#cc4444'; // red = missing
+      existing.title = 'Title/Desc missing';
+    }
+  }
+
+  // Status card inside YT panel
+  renderYtStatusCard();
+}
+
+function renderYtStatusCard() {
+  const card = document.getElementById('ytUploadStatusCard');
+  if (!card) return;
+  const s      = _ytGetStatus();
+  const checks = getChecks();
+
+  const hasTitle   = !!s.title;
+  const hasDesc    = !!s.desc;
+  const hasThumb   = !!checks['chk-thumbnail'];
+  const uploaded   = !!checks['chk-upload'];
+
+  const rows = [
+    { label: '📝 Title', done: hasTitle,  miss: 'Title generate nahi hua — upar se banao' },
+    { label: '📄 Description', done: hasDesc, miss: 'Description generate nahi hua' },
+    { label: '🖼 Thumbnail', done: hasThumb, miss: 'Thumbnail abhi ready nahi' },
+    { label: '⬆️ Uploaded', done: uploaded, miss: 'YouTube pe upload pending hai' },
+  ];
+
+  const allDone = rows.every(r => r.done);
+
+  card.innerHTML = `
+    <div style="font-size:10px;color:#ff4444;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;">
+      📊 Upload Status — ${state.epNum || 'EP'}
+    </div>
+    ${rows.map(r => `
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #1a0000;">
+        <span style="font-size:16px;">${r.done ? '✅' : '❌'}</span>
+        <div style="flex:1;">
+          <div style="font-size:13px;color:${r.done ? '#aaa' : '#ddd'};">${r.label}</div>
+          ${!r.done ? `<div style="font-size:11px;color:#cc4444;margin-top:1px;">${r.miss}</div>` : ''}
+        </div>
+      </div>
+    `).join('')}
+    <div style="margin-top:10px;font-size:12px;color:${allDone ? '#44bb66' : '#666'};">
+      ${allDone ? '🎉 Sab ready hai — upload karo!' : `⚠️ ${rows.filter(r=>!r.done).length} cheez${rows.filter(r=>!r.done).length>1?'en':''} baaki hain`}
+    </div>
+  `;
+}
+
+// Call on YT tab open
+const _origRenderYtChecklist = window.renderYtChecklist || renderYtChecklist;
