@@ -78,6 +78,11 @@ async function ytMatchMyStories() {
     data = await _fetchYtVideos();
   } catch (err) {
     console.warn('YT match skip:', err.message);
+    // API error pe bhi Not Uploaded dikhao
+    cards.forEach(card => {
+      const b = card.querySelector('.yt-views-badge');
+      if (b) b.innerHTML = '<span style="font-size:10px;color:#553333;">❌ Not Uploaded</span>';
+    });
     return;
   }
 
@@ -105,11 +110,11 @@ async function ytMatchMyStories() {
         <a href="https://youtube.com/watch?v=${bestVideo.videoId}" target="_blank"
            onclick="event.stopPropagation()"
            style="display:inline-flex;align-items:center;gap:5px;color:#ff4444;text-decoration:none;font-size:11px;font-weight:700;">
-          <span style="color:#ff4444;">▶</span>
+          <span>▶</span>
           <span>${_ytFormatViews(bestVideo.viewCount)} views</span>
         </a>`;
     } else {
-      viewsBadge.innerHTML = '';
+      viewsBadge.innerHTML = `<span style="font-size:10px;color:#553333;font-weight:600;">❌ Not Uploaded</span>`;
     }
   });
 }
