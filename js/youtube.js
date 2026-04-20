@@ -1,4 +1,5 @@
-// ══ YOUTUBE PANEL ══
+// js/youtube.js 
+//══ YOUTUBE PANEL ══
 
 // ══ CHANNEL NAME AUTO-FETCH ══
 async function ytAutoFetchChannelName() {
@@ -7,28 +8,22 @@ async function ytAutoFetchChannelName() {
     const name = data.channelName || '';
     if (!name) return;
 
-    // state mein save karo — lekin sirf agar khali ho
+    // state mein save karo — hamesha YouTube se override karo
     if (window.state) {
-      // Pehle check karo ki state.channel already kuch aur set hai
-      // (setup screen se manually enter kiya ho toh overwrite nahi karo)
+      state.channel = name;
       const inp = document.getElementById('cfgChannel');
-      const manualVal = inp ? inp.value.trim() : '';
-      // Agar input empty hai ya already YouTube se set tha toh hi update karo
-      if (!manualVal || inp?.dataset.ytAuto === 'true') {
-        state.channel = name;
-        if (inp) {
-          inp.value = name;
-          inp.dataset.ytAuto = 'true';
-          inp.readOnly = true;
-          inp.style.cssText += ';opacity:0.6;cursor:not-allowed;background:#0a000a;border-color:#220022;';
-          const label = inp.closest('.field')?.querySelector('label');
-          if (label && !label.querySelector('.yt-auto-badge')) {
-            const badge = document.createElement('span');
-            badge.className = 'yt-auto-badge';
-            badge.style.cssText = 'margin-left:6px;font-size:9px;color:#ff4444;background:rgba(200,0,0,0.12);border:1px solid #440000;padding:1px 6px;border-radius:10px;letter-spacing:1px;vertical-align:middle;';
-            badge.textContent = '▶ YouTube se auto';
-            label.appendChild(badge);
-          }
+      if (inp) {
+        inp.value = name;
+        inp.dataset.ytAuto = 'true';
+        inp.readOnly = true;
+        inp.style.cssText += ';opacity:0.6;cursor:not-allowed;background:#0a000a;border-color:#220022;';
+        const label = inp.closest('.field')?.querySelector('label');
+        if (label && !label.querySelector('.yt-auto-badge')) {
+          const badge = document.createElement('span');
+          badge.className = 'yt-auto-badge';
+          badge.style.cssText = 'margin-left:6px;font-size:9px;color:#ff4444;background:rgba(200,0,0,0.12);border:1px solid #440000;padding:1px 6px;border-radius:10px;letter-spacing:1px;vertical-align:middle;';
+          badge.textContent = '▶ YouTube se auto';
+          label.appendChild(badge);
         }
       }
     }
@@ -260,6 +255,7 @@ async function generateYtDesc() {
   btn.innerHTML = '<div class="spinner"></div> Description ban raha hai...';
   out.innerHTML = '<div class="analysis-loading"><div class="spinner"></div>SEO description aur tags ban rahe hain...</div>';
 
+  const channelName = state.channel || document.getElementById('cfgChannel')?.value?.trim() || 'KAALI RAAT';
   const storyText = state.storyChunks.map(function(c){ return c.text; }).join('\n\n').slice(0, 1500);
   try {
     const res = await fetch('/api/ai', {
@@ -271,7 +267,7 @@ async function generateYtDesc() {
         temperature: 0.7,
         messages: [{
           role: 'user',
-          content: `Tu ek Hindi YouTube horror channel "${state.channel}" ka SEO expert hai.
+          content: `Tu ek Hindi YouTube horror channel "${channelName}" ka SEO expert hai.
 
 Story: "${state.title}" | ${state.season} ${state.epNum}
 Story text: ${storyText.slice(0,800)}
@@ -286,7 +282,6 @@ Ek complete YouTube upload description banao. Exactly iss format mein:
 [4-5 lines story summary in Hindi — engaging, leave on cliffhanger]
 
 ━━━━━━━━━━━━━━━━━━━━━━
-🔔 Channel subscribe karo: @${state.channel.replace(/\s+/g,'').toLowerCase()}
 👍 Like karo agar story acha laga
 💬 Comment mein batao aage kya hoga
 ━━━━━━━━━━━━━━━━━━━━━━
