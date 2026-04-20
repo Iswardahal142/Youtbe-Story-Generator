@@ -456,5 +456,8 @@ PROMPT 2:
 // ── Auto-open YT tab from story end banner ──
 function goToYtExport() {
   goToAnalysis();
-  setTimeout(function() { switchTab('yt'); }, 150);
+  setTimeout(function() {
+    switchTab('yt');
+    if (window.bnavSetActive) bnavSetActive('youtube');
+  }, 150);
 }
