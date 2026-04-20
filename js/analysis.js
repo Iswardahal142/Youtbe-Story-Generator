@@ -707,12 +707,12 @@ async function generateThumbPrompt() {
 
       out.innerHTML = `
         <div class="img-prompt-box" style="background:#050010;border-color:#330066;">
-          <div class="img-prompt-label" style="color:#aa66ff;">🖼 \${state.epNum} · \${state.title}</div>
+          <div class="img-prompt-label" style="color:#aa66ff;">🖼 ${state.epNum} · ${state.title}</div>
           <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;">
-            <span class="scene-tag">\${thumbStyle}</span>
-            <span class="scene-tag">\${thumbPlat.split(',')[0]}</span>
+            <span class="scene-tag">${thumbStyle}</span>
+            <span class="scene-tag">${thumbPlat.split(',')[0]}</span>
           </div>
-          <div class="img-prompt-text">\${prompt}</div>
+          <div class="img-prompt-text">${prompt}</div>
           <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
             <button id="thumbCopyBtn" class="img-copy-btn" onclick="copyThumbPrompt(this, this.closest('.img-prompt-box').querySelector('.img-prompt-text').textContent)" style="border-color:#aa66ff;color:#aa66ff;flex:1;">📋 Prompt Copy Karo</button>
             <button class="img-copy-btn" onclick="openThumbModal(this.closest('.img-prompt-box').querySelector('.img-prompt-text').textContent)" style="border-color:#cc88ff;color:#cc88ff;flex:1;">🖼 Image Banao</button>
