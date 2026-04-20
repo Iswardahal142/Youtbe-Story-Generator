@@ -724,7 +724,6 @@
     <div class="topbar-actions">
       <button class="btn btn-icon" title="Scenes & Characters" onclick="goToAnalysis()">🎬</button>
       <button class="btn btn-icon" title="Thumbnail" onclick="goToThumb()">🎨</button>
-      <button class="btn btn-icon" title="YouTube Export" onclick="goToYtExport()" style="color:#ff4444;font-size:14px;font-weight:700;">YT</button>
       <button class="btn btn-icon" title="Save" onclick="saveCurrentEpisode()">💾</button>
     </div>
   </div>
@@ -850,26 +849,19 @@
 <div class="screen" id="screenAnalysis">
 
   <div class="topbar">
-    <button class="btn btn-icon" onclick="openDrawer()">☰</button>
+    <button class="btn btn-icon" onclick="showScreen('screenStory'); bnavSetActive('generate')">←</button>
     <span class="topbar-logo">🔍 ANALYSIS</span>
     <div style="margin-left:auto;display:flex;gap:8px;">
       <button class="btn btn-ghost" style="padding:8px 12px;font-size:12px;" onclick="goToThumb()">🎨 Thumbnail</button>
     </div>
   </div>
 
-  <!-- Tab bar — outside scroll so stays sticky -->
-  <div class="analysis-tabs" style="margin:0;border-radius:0;border-left:none;border-right:none;border-top:none;position:sticky;top:48px;z-index:90;background:var(--panel);">
-    <button class="atab active" id="tabScenes" onclick="switchTab('scenes')">🎬 Scenes</button>
-    <button class="atab" id="tabChars" onclick="switchTab('chars')">👤 Characters</button>
-    <button class="atab" id="tabYt" onclick="switchTab('yt')" style="background:linear-gradient(135deg,#1a0000,#0a0000);border:1px solid #cc0000;color:#ff4444;border-radius:8px;position:relative;">▶ YT Export</button>
-  </div>
-
   <div class="analysis-content" id="analysisContent">
 
-    <!-- Scenes Panel -->
+    <!-- Scenes Section — always visible, no tabs -->
     <div class="analysis-panel" id="panelScenes">
       <div class="analysis-generate-bar">
-        <div class="analysis-hint">Story ke saare scenes ek-ek karke breakdown milegi — location, mood, kya hua.</div>
+        <div class="analysis-hint">Story ke saare scenes — location, mood, kya hua.</div>
         <button class="btn btn-primary" id="genScenesBtn" onclick="generateScenes()" style="width:100%;">
           🎬 Scene Breakdown Generate Karo
         </button>
@@ -877,10 +869,10 @@
       <div id="scenesOutput"></div>
     </div>
 
-    <!-- Characters Panel -->
-    <div class="analysis-panel" id="panelChars" style="display:none;">
+    <!-- Characters Section — always visible, no tabs -->
+    <div class="analysis-panel" id="panelChars">
       <div class="analysis-generate-bar">
-        <div class="analysis-hint">Story mein jo bhi characters hain — unka naam, role, description aur kab aaye.</div>
+        <div class="analysis-hint">Story ke saare characters — naam, role, description.</div>
         <button class="btn btn-primary" id="genCharsBtn" onclick="generateCharacters()" style="width:100%;">
           👤 Character List Generate Karo
         </button>
