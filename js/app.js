@@ -9,12 +9,24 @@ function toast(msg) {
 }
 
 // ══ INIT ══
+// Firebase auth ready hone ke baad call hoga
+async function _appLoad() {
+  await load();
+  restoreSetupForm();
+  renderSetupEpList();
+}
+window._appLoad = _appLoad;
+
 window.addEventListener('load', () => {
-  // Firebase ready hone ka wait karo, phir load karo
   window.db_onReady(async () => {
-    await load();
-    restoreSetupForm();
-    renderSetupEpList();
+    // Agar user already logged in hai (page refresh) toh seedha load karo
+    // renderAuthUI firebase.js mein handle karega — yahan wait karo
+    setTimeout(async () => {
+      const appContent = document.getElementById('appContent');
+      if (appContent && appContent.style.display !== 'none') {
+        await _appLoad();
+      }
+    }, 800);
   });
 });
 
@@ -67,6 +79,7 @@ function copyScenePrompt(btn) {
 }
 
 // Modal background tap se band ho
-document.getElementById('imgGenModal').addEventListener('click', function(e) {
+const _modal = document.getElementById('imgGenModal');
+if (_modal) _modal.addEventListener('click', function(e) {
   if (e.target === this) closeImgModal();
 });
