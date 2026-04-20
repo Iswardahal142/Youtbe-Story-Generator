@@ -725,7 +725,6 @@
     <span class="topbar-logo">☠ KAALI RAAT</span>
     <span class="topbar-ep" id="topbarEp">EP 01</span>
     <div class="topbar-actions">
-      <button class="btn btn-icon" title="HF Settings" onclick="goToAnalysis(); setTimeout(()=>switchTab('el'),150)">⚙️</button>
       <button class="btn btn-icon" title="Thumbnail" onclick="goToThumb()">🎨</button>
       <button class="btn btn-icon" title="YouTube Export" onclick="goToYtExport()" style="color:#ff4444;font-size:14px;font-weight:700;">YT</button>
       <button class="btn btn-icon" title="Save" onclick="saveCurrentEpisode()">💾</button>
@@ -860,14 +859,14 @@
     </div>
   </div>
 
-  <div class="analysis-content" id="analysisContent">
+  <!-- Tab bar — outside scroll so stays sticky -->
+  <div class="analysis-tabs" style="margin:0;border-radius:0;border-left:none;border-right:none;border-top:none;position:sticky;top:48px;z-index:90;background:var(--panel);">
+    <button class="atab active" id="tabScenes" onclick="switchTab('scenes')">🎬 Scenes</button>
+    <button class="atab" id="tabChars" onclick="switchTab('chars')">👤 Characters</button>
+    <button class="atab" id="tabYt" onclick="switchTab('yt')" style="background:linear-gradient(135deg,#1a0000,#0a0000);border:1px solid #cc0000;color:#ff4444;border-radius:8px;position:relative;">▶ YT Export</button>
+  </div>
 
-    <!-- Tab bar -->
-    <div class="analysis-tabs">
-      <button class="atab active" id="tabScenes" onclick="switchTab('scenes')">🎬 Scenes</button>
-      <button class="atab" id="tabChars" onclick="switchTab('chars')">👤 Characters</button>
-      <button class="atab" id="tabYt" onclick="switchTab('yt')" style="background:linear-gradient(135deg,#1a0000,#0a0000);border:1px solid #cc0000;color:#ff4444;border-radius:8px;position:relative;">▶ YT Export</button>
-    </div>
+  <div class="analysis-content" id="analysisContent">
 
     <!-- Scenes Panel -->
     <div class="analysis-panel" id="panelScenes">
