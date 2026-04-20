@@ -13,8 +13,8 @@ export default async function handler(req, res) {
   if (!channelId) return res.status(500).json({ error: 'YOUTUBE_CHANNEL_ID not set in env' });
 
   try {
-    // Step 1: Channel ka uploads playlist ID fetch karo
-    const channelUrl = `https://www.googleapis.com/youtube/v3/channels?part=contentDetails&id=${channelId}&key=${apiKey}`;
+    // Step 1: Channel ka uploads playlist ID + channelName fetch karo
+    const channelUrl = `https://www.googleapis.com/youtube/v3/channels?part=contentDetails,snippet&id=${channelId}&key=${apiKey}`;
     const channelRes = await fetch(channelUrl);
     const channelData = await channelRes.json();
 
@@ -23,6 +23,8 @@ export default async function handler(req, res) {
     }
 
     const uploadsPlaylistId = channelData.items[0].contentDetails.relatedPlaylists.uploads;
+    // ✅ Channel name ab include ho raha hai
+    const channelName = channelData.items[0].snippet?.title || '';
 
     // Step 2: Last 20 videos fetch karo uploads playlist se
     const playlistUrl = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet,contentDetails&playlistId=${uploadsPlaylistId}&maxResults=20&key=${apiKey}`;
@@ -30,7 +32,7 @@ export default async function handler(req, res) {
     const playlistData = await playlistRes.json();
 
     if (!playlistData.items?.length) {
-      return res.status(200).json({ videos: [], lastVideo: null });
+      return res.status(200).json({ channelName, videos: [], lastVideo: null });
     }
 
     // Step 3: Video IDs nikalo — statistics (views) ke liye
@@ -53,7 +55,8 @@ export default async function handler(req, res) {
     // Most recently published video
     const lastVideo = videos[0] || null;
 
-    return res.status(200).json({ videos, lastVideo });
+    // ✅ channelName response mein include
+    return res.status(200).json({ channelName, videos, lastVideo });
 
   } catch (err) {
     console.error('YouTube API error:', err);
