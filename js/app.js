@@ -108,7 +108,9 @@ function bnavGo(tab) {
     showScreen('screenMyStories');
     renderMyStories();
   } else if (tab === 'youtube') {
-    goToYtExport();
+    showScreen('screenYoutube');
+    renderYtChecklist();
+    if (window.updateYtStatusBadge) updateYtStatusBadge();
     setTimeout(function() {
       if (window.ytTabComparison) window.ytTabComparison().catch(function(){});
     }, 300);
@@ -126,6 +128,7 @@ document.addEventListener('DOMContentLoaded', () => {
       orig(id);
       if (id === 'screenSetup' || id === 'screenStory') bnavSetActive('generate');
       else if (id === 'screenMyStories') bnavSetActive('stories');
+      else if (id === 'screenYoutube')   bnavSetActive('youtube');
       else if (id === 'screenProfile')   bnavSetActive('profile');
     };
   };
