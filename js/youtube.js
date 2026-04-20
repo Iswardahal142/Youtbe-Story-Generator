@@ -495,11 +495,13 @@ PROMPT 2:
 
 // ── Auto-open YT tab from story end banner ──
 function goToYtExport() {
-  goToAnalysis();
+  if (window.showScreen) showScreen('screenYoutube');
+  if (window.bnavSetActive) bnavSetActive('youtube');
+  renderYtChecklist();
+  if (window.updateYtStatusBadge) updateYtStatusBadge();
   setTimeout(function() {
-    switchTab('yt');
-    if (window.bnavSetActive) bnavSetActive('youtube');
-  }, 150);
+    if (window.ytTabComparison) window.ytTabComparison().catch(function(){});
+  }, 300);
 }
 // ══ YT UPLOAD STATUS TRACKING ══
 const YT_STATUS_SK = 'kaali_raat_yt_status';
