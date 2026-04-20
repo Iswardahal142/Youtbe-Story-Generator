@@ -42,7 +42,16 @@ let _readyCallbacks = [];
 let _dbReady        = false;
 
 // ── Auth State ───────────────────────────────────
+let _authResolved = false;
+
 onAuthStateChanged(auth, async (user) => {
+  // Hide loading screen on first resolution
+  if (!_authResolved) {
+    _authResolved = true;
+    const loading = document.getElementById('authLoading');
+    if (loading) loading.style.display = 'none';
+  }
+
   if (user) {
     if (ALLOWED_EMAILS.length > 0 && !ALLOWED_EMAILS.includes(user.email)) {
       await signOut(auth);
