@@ -107,32 +107,47 @@ JSON array format mein SIRF return karo:
     const clean = raw.replace(/```json|```/g,'').trim();
     const titles = JSON.parse(clean);
 
-    const card = document.createElement('div');
-    card.className = 'yt-output-card';
-    card.innerHTML = '<div style="font-size:10px;color:#44bb66;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px;">7 Title Options — Best wala choose karo 👇</div>';
+    // Store all titles, show one at a time
+    window._ytAllTitles = titles;
+    window._ytTitleIdx = 0;
 
-    titles.forEach(function(t, i) {
-      const row = document.createElement('div');
-      row.className = 'yt-title-option';
-      const num = document.createElement('span');
-      num.style.cssText = 'font-size:11px;color:#444;flex-shrink:0;font-family:monospace;';
-      num.textContent = (i+1) + '.';
-      const txt = document.createElement('span');
+    function showTitleAtIdx(idx) {
+      const t = window._ytAllTitles[idx];
+      const card = document.createElement('div');
+      card.className = 'yt-output-card';
+      const label = document.createElement('div');
+      label.style.cssText = 'font-size:10px;color:#44bb66;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;';
+      label.textContent = '🎯 Title ' + (idx+1) + ' / ' + window._ytAllTitles.length;
+      card.appendChild(label);
+      const txt = document.createElement('div');
       txt.className = 'yt-title-text';
+      txt.style.cssText = 'font-size:15px;font-weight:700;color:var(--bone);line-height:1.5;padding:10px 0;';
       txt.textContent = t;
+      card.appendChild(txt);
+      const btnRow = document.createElement('div');
+      btnRow.style.cssText = 'display:flex;gap:8px;margin-top:4px;';
       const copyB = ytCopyBtn(t, '📋 Copy');
-      row.appendChild(num);
-      row.appendChild(txt);
-      row.appendChild(copyB);
-      card.appendChild(row);
-    });
+      copyB.style.flex = '1';
+      const nextB = document.createElement('button');
+      nextB.className = 'yt-copy-btn';
+      nextB.style.cssText = 'flex:1;border-color:#553300;color:#ffaa44;';
+      nextB.textContent = '➡️ Alag Title';
+      nextB.onclick = function() {
+        window._ytTitleIdx = (window._ytTitleIdx + 1) % window._ytAllTitles.length;
+        out.innerHTML = '';
+        out.appendChild(showTitleCard(window._ytTitleIdx));
+      };
+      btnRow.appendChild(copyB);
+      btnRow.appendChild(nextB);
+      card.appendChild(btnRow);
+      return card;
+    }
 
-    const copyAllBtn = ytCopyBtn(titles.join('\n'), '📋 All Copy');
-    copyAllBtn.style.marginTop = '4px';
-    card.appendChild(copyAllBtn);
+    function showTitleCard(idx) { return showTitleAtIdx(idx); }
+
     out.innerHTML = '';
-    out.appendChild(card);
-    toast('✅ 7 titles ready!');
+    out.appendChild(showTitleAtIdx(0));
+    toast('✅ Title ready! ➡️ se alag title dekho');
     // Mark title as generated
     _ytSetStatus('title', true);
     updateYtStatusBadge();
