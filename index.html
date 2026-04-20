@@ -8,8 +8,208 @@
 <link rel="stylesheet" href="css/base.css">
 <link rel="stylesheet" href="css/components.css">
 <link rel="stylesheet" href="css/screens.css">
+<style>
+/* ── Auth Screen ── */
+#authScreen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: #0a000a;
+  padding: 24px;
+}
+.auth-brand-skull { font-size: 52px; display: block; margin-bottom: 8px; }
+.auth-brand-name {
+  font-family: 'Cinzel Decorative', serif;
+  font-size: 22px;
+  font-weight: 900;
+  color: #cc2222;
+  letter-spacing: 3px;
+  display: block;
+  margin-bottom: 4px;
+}
+.auth-brand-tag {
+  font-size: 10px;
+  color: #444;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  display: block;
+  margin-bottom: 36px;
+}
+.auth-card {
+  background: #110011;
+  border: 1px solid #330033;
+  border-radius: 18px;
+  padding: 30px 24px;
+  width: 100%;
+  max-width: 340px;
+  text-align: center;
+}
+.auth-subtitle {
+  font-size: 13px;
+  color: #777;
+  line-height: 1.7;
+  margin-bottom: 24px;
+}
+#googleLoginBtn {
+  width: 100%;
+  padding: 14px;
+  background: #fff;
+  color: #111;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: opacity 0.2s, transform 0.1s;
+  font-family: 'Noto Sans Devanagari', sans-serif;
+}
+#googleLoginBtn:hover { opacity: 0.92; transform: translateY(-1px); }
+#googleLoginBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+#authError {
+  display: none;
+  margin-top: 14px;
+  padding: 10px 12px;
+  background: rgba(204,0,0,0.1);
+  border: 1px solid #440000;
+  border-radius: 8px;
+  color: #ff6666;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.auth-footer { margin-top: 20px; font-size: 11px; color: #333; line-height: 1.7; }
+
+/* ── User Header (top-right, after login) ── */
+#userHeader {
+  position: fixed;
+  top: 0; right: 0;
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: rgba(10,0,10,0.9);
+  backdrop-filter: blur(8px);
+  border-bottom-left-radius: 12px;
+  border-bottom: 1px solid #220022;
+  border-left: 1px solid #220022;
+}
+#userAvatar {
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  border: 1px solid #440044;
+  object-fit: cover;
+}
+#userName {
+  font-size: 11px;
+  color: #777;
+  max-width: 110px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#logoutBtn {
+  background: none;
+  border: 1px solid #330033;
+  color: #555;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 10px;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+#logoutBtn:hover { color: #cc4444; border-color: #550000; }
+
+/* ── Image Generator Modal ── */
+#imgGenModal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  background: rgba(0,0,0,0.88);
+  backdrop-filter: blur(6px);
+  align-items: center;
+  justify-content: center;
+}
+#imgGenModal.open { display: flex; }
+.img-modal-inner {
+  width: 100%;
+  max-width: 480px;
+  height: 88vh;
+  background: #0a000f;
+  border: 1px solid #330044;
+  border-radius: 18px;
+  overflow: hidden;
+  position: relative;
+  margin: 16px;
+}
+.img-modal-close {
+  position: absolute;
+  top: 10px; right: 12px;
+  z-index: 10;
+  background: rgba(10,0,20,0.9);
+  border: 1px solid #440055;
+  color: #cc88ff;
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: 'Noto Sans Devanagari', sans-serif;
+}
+#imgGenIframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: #0a000f;
+}
+</style>
 </head>
 <body>
+
+<!-- ══════ AUTH SCREEN ══════ -->
+<div id="authScreen">
+  <div style="text-align:center;width:100%;max-width:340px;">
+    <span class="auth-brand-skull">💀</span>
+    <span class="auth-brand-name">KAALI RAAT</span>
+    <span class="auth-brand-tag">Horror Story Studio</span>
+
+    <div class="auth-card">
+      <p class="auth-subtitle">
+        Apne Google account se directly login karo — koi registration nahi, koi password nahi. 🎃
+      </p>
+      <button id="googleLoginBtn" onclick="googleLogin()">
+        <svg width="18" height="18" viewBox="0 0 48 48">
+          <path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.2l6.7-6.7C35.7 2.3 30.2 0 24 0 14.7 0 6.7 5.4 2.7 13.3l7.8 6c1.8-5.4 6.8-9.8 13.5-9.8z"/>
+          <path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h12.7c-.5 2.9-2.2 5.3-4.7 6.9l7.3 5.7c4.3-4 6.8-9.9 7.2-16.6z"/>
+          <path fill="#FBBC05" d="M10.5 28.6A14.6 14.6 0 0 1 9.5 24c0-1.6.3-3.1.8-4.6l-7.8-6A24 24 0 0 0 0 24c0 3.9.9 7.5 2.7 10.7l7.8-6.1z"/>
+          <path fill="#34A853" d="M24 48c6.2 0 11.4-2 15.2-5.5l-7.3-5.7c-2 1.4-4.6 2.2-7.9 2.2-6.6 0-12.2-4.5-14.2-10.4l-7.8 6.1C6.7 42.6 14.7 48 24 48z"/>
+        </svg>
+        🔐 Google se Login Karo
+      </button>
+      <div id="authError"></div>
+    </div>
+
+    <p class="auth-footer">
+      Sirf authorized users hi access kar sakte hain.<br>
+      Pehli baar bhi Google se seedha login hoga — registration nahi.
+    </p>
+  </div>
+</div>
+
+<!-- ══════ APP CONTENT (shows after login) ══════ -->
+<div id="appContent" style="display:none;">
+
+<!-- User Header -->
+<div id="userHeader">
+  <img id="userAvatar" src="" alt="">
+  <span id="userName"></span>
+  <button id="logoutBtn" onclick="logoutUser()">Logout</button>
+</div>
 
 <!-- ══════ SCREEN 0: SETUP ══════ -->
 <div class="screen active" id="screenSetup">
@@ -42,7 +242,7 @@
     <div class="card-block" id="aiGenCard">
       <div class="card-title">🤖 AI Story Generator</div>
       <div style="font-size:12px;color:var(--bone-dim);line-height:1.6;">
-        AI खुद एक unique horror story का <strong style="color:var(--bone);">शीर्षक</strong> generate करेगा — जो पहले कभी नहीं बना हो।
+        AI khud ek unique horror story ka <strong style="color:var(--bone);">शीर्षक</strong> generate karega — jo pehle kabhi nahi bana ho.
       </div>
 
       <!-- Genre chips -->
@@ -344,6 +544,16 @@
 
 <!-- Toast -->
 <div class="toast" id="toast"></div>
+
+</div><!-- /appContent -->
+
+<!-- ══════ IMAGE GENERATOR MODAL ══════ -->
+<div id="imgGenModal">
+  <div class="img-modal-inner">
+    <button class="img-modal-close" onclick="closeImgModal()">✕ Band Karo</button>
+    <iframe id="imgGenIframe" src=""></iframe>
+  </div>
+</div>
 
 <!-- Firebase — type="module" zaroori hai -->
 <script type="module" src="js/firebase.js"></script>
