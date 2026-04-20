@@ -187,6 +187,65 @@
   padding-top: 46px;
 }
 
+/* ── Bottom Nav ── */
+#bottomNav {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  z-index: 998;
+  display: flex;
+  align-items: stretch;
+  background: rgba(8,0,8,0.97);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-top: 1px solid #2a0022;
+  height: 58px;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.bnav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px 4px;
+  transition: background 0.15s;
+  -webkit-tap-highlight-color: transparent;
+  position: relative;
+}
+.bnav-item:active { background: rgba(180,0,60,0.08); }
+.bnav-icon {
+  font-size: 18px;
+  line-height: 1;
+  transition: transform 0.15s;
+}
+.bnav-label {
+  font-size: 10px;
+  color: #555;
+  letter-spacing: 0.3px;
+  font-family: 'Noto Sans Devanagari', sans-serif;
+  transition: color 0.15s;
+}
+/* Active state */
+.bnav-item.active .bnav-label { color: #cc2244; }
+.bnav-item.active .bnav-icon  { transform: translateY(-1px); }
+.bnav-item.active::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 20%; right: 20%;
+  height: 2px;
+  background: #cc2244;
+  border-radius: 0 0 3px 3px;
+}
+
+/* Extra bottom padding so last content isn't hidden behind nav */
+.screen { padding-bottom: 58px; }
+/* Story screen — bottom-bar already handles its own bottom, don't double pad */
+#screenStory { padding-bottom: 0; }
+
 /* topbar (story/thumb/analysis screens) must sit below userHeader */
 .topbar {
   top: 46px !important;
@@ -617,11 +676,30 @@
   </div>
 </div>
 
-<!-- Scroll FAB -->
-<div class="scroll-fab" id="scrollFab" onclick="scrollToBottom()">↓</div>
+<!-- Scroll FAB -->\n<div class="scroll-fab" id="scrollFab" onclick="scrollToBottom()">↓</div>
 
 <!-- Toast -->
 <div class="toast" id="toast"></div>
+
+<!-- ══════ BOTTOM NAV ══════ -->
+<nav id="bottomNav">
+  <button class="bnav-item active" id="bnavGenerate" onclick="bnavGo('generate')">
+    <span class="bnav-icon">✍️</span>
+    <span class="bnav-label">Generate</span>
+  </button>
+  <button class="bnav-item" id="bnavStories" onclick="bnavGo('stories')">
+    <span class="bnav-icon">📚</span>
+    <span class="bnav-label">My Stories</span>
+  </button>
+  <button class="bnav-item" id="bnavYoutube" onclick="bnavGo('youtube')">
+    <span class="bnav-icon" style="color:#ff4444;">▶</span>
+    <span class="bnav-label">YouTube</span>
+  </button>
+  <button class="bnav-item" id="bnavMore" onclick="bnavGo('more')">
+    <span class="bnav-icon">＋</span>
+    <span class="bnav-label">More</span>
+  </button>
+</nav>
 
 </div><!-- /appContent -->
 
