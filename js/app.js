@@ -8,6 +8,40 @@ function toast(msg) {
   toastTimer = setTimeout(() => el.classList.remove('show'), 2800);
 }
 
+// ══ BOTTOM NAV ══
+function bnavSetActive(tab) {
+  document.querySelectorAll('.bnav-item').forEach(b => b.classList.remove('active'));
+  const map = { generate: 'bnavGenerate', stories: 'bnavStories', youtube: 'bnavYoutube', more: 'bnavMore' };
+  const el = document.getElementById(map[tab]);
+  if (el) el.classList.add('active');
+}
+
+function bnavGo(tab) {
+  bnavSetActive(tab);
+  if (tab === 'generate') { goToSetup(); }
+  else if (tab === 'stories') { goToAnalysis(); setTimeout(() => switchTab('el'), 150); }
+  else if (tab === 'youtube') { goToYtExport(); }
+  else if (tab === 'more') { toast('🔧 Jald aayega...'); }
+}
+
+// Auto-highlight correct tab when screens change via other buttons
+const _origShowScreen = window.showScreen;
+document.addEventListener('DOMContentLoaded', () => {
+  // Patch showScreen after all scripts load
+  const _patch = () => {
+    const orig = window.showScreen;
+    if (!orig) return setTimeout(_patch, 100);
+    window.showScreen = function(id) {
+      orig(id);
+      if (id === 'screenSetup')    bnavSetActive('generate');
+      else if (id === 'screenStory') bnavSetActive('generate');
+      else if (id === 'screenAnalysis') { /* keep whichever tab triggered it */ }
+      else if (id === 'screenThumb') { /* no specific tab */ }
+    };
+  };
+  _patch();
+});
+
 // ══ INIT ══
 // Firebase auth ready hone ke baad call hoga (firebase.js triggers this)
 async function _appLoad() {
