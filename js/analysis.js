@@ -27,7 +27,10 @@ function switchTab(tab) {
   document.getElementById('panelScenes').style.display = tab === 'scenes' ? 'flex' : 'none';
   document.getElementById('panelChars').style.display = tab === 'chars' ? 'flex' : 'none';
   document.getElementById('panelYt').style.display = tab === 'yt' ? 'flex' : 'none';
-  if (tab === 'yt') { renderYtChecklist(); }
+  if (tab === 'yt') {
+    renderYtChecklist();
+    if (window.updateYtStatusBadge) updateYtStatusBadge();
+  }
 }
 
 // ══ EXTRACT CHARACTER BIBLE (auto, silent) ══
