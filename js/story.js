@@ -158,7 +158,7 @@ async function generatePartImagePrompt(chunkEl, storyText, partNum) {
 async function startStudio() {
   if (!generatedTitle) { toast('⚠️ Pehle AI se story idea generate karo!'); return; }
 
-  state.channel = window.ytFetchedChannelName || document.getElementById('cfgChannel').value.trim() || 'KAALI RAAT';
+  state.channel = window.ytFetchedChannelName || document.getElementById('cfgChannel').value.trim() || '';
   state.title = generatedTitle;
   state.prompt = generatedPrompt;
 
