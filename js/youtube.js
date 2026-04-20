@@ -2,11 +2,17 @@
 //══ YOUTUBE PANEL ══
 
 // ══ CHANNEL NAME AUTO-FETCH ══
+// Global variable — story.js yahan se channel name lega
+window.ytFetchedChannelName = '';
+
 async function ytAutoFetchChannelName() {
   try {
     const data = await fetch('/api/youtube').then(r => r.json());
     const name = data.channelName || '';
     if (!name) return;
+
+    // Global mein save karo — story.js use karega
+    window.ytFetchedChannelName = name;
 
     // state mein save karo — hamesha YouTube se override karo
     if (window.state) {
