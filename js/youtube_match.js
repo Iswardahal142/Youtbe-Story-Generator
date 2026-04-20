@@ -65,11 +65,13 @@ function _ytFormatViews(n) {
   return n.toString();
 }
 
+// ── Top video context — story generation mein use hoga ──
+window._ytTopVideoContext = null;
+
 // ══════════════════════════════════════════════
-// 1. MY STORIES — har story card pe views badge
+// 1. MY STORIES — har story card pe views + rank badge
 // ══════════════════════════════════════════════
 async function ytMatchMyStories() {
-  // All story cards dhundho
   const cards = document.querySelectorAll('.story-card[data-story-title]');
   if (!cards.length) return;
 
@@ -78,7 +80,6 @@ async function ytMatchMyStories() {
     data = await _fetchYtVideos();
   } catch (err) {
     console.warn('YT match skip:', err.message);
-    // API error pe bhi Not Uploaded dikhao
     cards.forEach(card => {
       const b = card.querySelector('.yt-views-badge');
       if (b) b.innerHTML = '<span style="font-size:10px;color:#553333;">❌ Not Uploaded</span>';
@@ -89,11 +90,26 @@ async function ytMatchMyStories() {
   const { videos } = data;
   if (!videos?.length) return;
 
+  // Views ke hisaab se sort karke rank assign karo (rank 1 = sabse zyada views)
+  const sorted = [...videos].sort((a, b) => (b.viewCount || 0) - (a.viewCount || 0));
+  const rankMap = {};
+  sorted.forEach((v, i) => { rankMap[v.videoId] = i + 1; });
+
+  // Top video context globally store karo — story.js use karega
+  if (sorted.length) {
+    const top = sorted[0];
+    window._ytTopVideoContext = {
+      rank: 1,
+      title: top.title || '',
+      viewCount: top.viewCount || 0,
+      description: (top.description || '').slice(0, 300),
+    };
+  }
+
   cards.forEach(card => {
     const storyTitle = card.dataset.storyTitle || '';
     if (!storyTitle) return;
 
-    // Best matching video dhundho
     let bestScore = 0;
     let bestVideo = null;
     videos.forEach(v => {
@@ -101,17 +117,19 @@ async function ytMatchMyStories() {
       if (score > bestScore) { bestScore = score; bestVideo = v; }
     });
 
-    // 40+ score pe match maano
     const viewsBadge = card.querySelector('.yt-views-badge');
     if (!viewsBadge) return;
 
     if (bestVideo && bestScore >= 40) {
+      const rank = rankMap[bestVideo.videoId] || '--';
+      const rankColor = rank === 1 ? '#ffcc00' : rank <= 3 ? '#ff8844' : rank <= 10 ? '#aaaaaa' : '#555555';
+      const rankLabel = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `#${rank}`;
       viewsBadge.innerHTML = `
         <a href="https://youtube.com/watch?v=${bestVideo.videoId}" target="_blank"
            onclick="event.stopPropagation()"
-           style="display:inline-flex;align-items:center;gap:5px;color:#ff4444;text-decoration:none;font-size:11px;font-weight:700;">
-          <span>▶</span>
-          <span>${_ytFormatViews(bestVideo.viewCount)} views</span>
+           style="display:inline-flex;align-items:center;gap:6px;text-decoration:none;">
+          <span style="font-size:11px;font-weight:800;color:${rankColor};">${rankLabel}</span>
+          <span style="font-size:11px;color:#ff4444;font-weight:700;">▶ ${_ytFormatViews(bestVideo.viewCount)} views</span>
         </a>`;
     } else {
       viewsBadge.innerHTML = `<span style="font-size:10px;color:#553333;font-weight:600;">❌ Not Uploaded</span>`;
