@@ -627,77 +627,70 @@
 
 <!-- ══════ SCREEN 0: SETUP ══════ -->
 <div class="screen active" id="screenSetup">
-  <!-- Mini topbar for setup screen -->
   <div class="mini-topbar">
     <button class="hamburger-btn" onclick="openDrawer()">☰</button>
     <span class="mini-topbar-title">💀 KAALI RAAT</span>
     <div style="width:36px;"></div>
   </div>
-  <div class="setup-card">
 
-    <!-- hidden inputs kept for compatibility -->
-    <div style="display:none;">
-      <input id="apiKeyInput">
-      <input id="cfgSeason">
-      <input id="cfgEp">
-      <input id="cfgTitle">
-      <textarea id="cfgPrompt"></textarea>
-    </div>
+  <div style="display:none;">
+    <input id="apiKeyInput">
+    <input id="cfgSeason">
+    <input id="cfgEp">
+    <input id="cfgTitle">
+    <textarea id="cfgPrompt"></textarea>
+  </div>
 
-    <!-- Basic Config -->
-    <div class="card-block">
-      <div class="card-title">🎬 Setup</div>
-      <div class="field">
-        <label>Channel Name</label>
-        <input type="text" id="cfgChannel" value="" placeholder="Channel ID not set" maxlength="20" readonly style="opacity:0.6;cursor:not-allowed;background:#0a000a;border-color:#220022;">
-      </div>
-    </div>
+  <div class="setup-scroll-body">
+    <div class="setup-card">
 
-    <!-- AI Story Generator -->
-    <div class="card-block" id="aiGenCard">
-      <div class="card-title">🤖 AI Story Generator</div>
-      <div style="font-size:12px;color:var(--bone-dim);line-height:1.6;">
-        AI khud ek unique horror story ka <strong style="color:var(--bone);">शीर्षक</strong> generate karega — jo pehle kabhi nahi bana ho.
+      <!-- Channel badge -->
+      <div class="sg-channel-row">
+        <span class="sg-yt-dot"></span>
+        <span class="sg-channel-label">CHANNEL</span>
+        <input type="text" id="cfgChannel" value="" placeholder="Channel ID not set" maxlength="20" readonly class="sg-channel-input">
       </div>
 
-      <!-- Genre chips -->
-      <div style="font-size:11px;color:var(--bone-dim);margin-bottom:4px;letter-spacing:1px;">GENRE / SETTING (optional)</div>
-      <div class="preset-chips" id="genreChips">
-        <div class="chip active" data-g="any">🎲 Kuch Bhi</div>
-        <div class="chip" data-g="haveli">🏚 Haveli</div>
-        <div class="chip" data-g="jungle">🌲 Jungle</div>
-        <div class="chip" data-g="highway">🌙 Highway</div>
-        <div class="chip" data-g="gaon">🏘 Gaon</div>
-        <div class="chip" data-g="school">🏫 School</div>
-        <div class="chip" data-g="supernatural">👻 Supernatural</div>
-        <div class="chip" data-g="psychological">🧠 Psychological</div>
+      <!-- Genre -->
+      <div class="sg-block">
+        <div class="sg-block-label">GENRE</div>
+        <div class="preset-chips sg-chips" id="genreChips">
+          <div class="chip active" data-g="any">All</div>
+          <div class="chip" data-g="haveli">🏚 Haveli</div>
+          <div class="chip" data-g="jungle">🌲 Jungle</div>
+          <div class="chip" data-g="highway">🌙 Highway</div>
+          <div class="chip" data-g="gaon">🏘 Gaon</div>
+          <div class="chip" data-g="school">🏫 School</div>
+          <div class="chip" data-g="supernatural">👻 Super</div>
+          <div class="chip" data-g="psychological">🧠 Psycho</div>
+        </div>
       </div>
 
-      <!-- AI Generated preview box -->
-      <div id="aiGenPreview" style="display:none;background:var(--panel2);border:1px solid var(--blood-d);border-radius:8px;padding:14px;margin-top:4px;">
-        <div style="font-size:10px;color:var(--blood);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;">✨ Story Title</div>
-        <div id="genTitlePreview" style="font-size:17px;font-weight:700;color:var(--bone);line-height:1.4;"></div>
+      <!-- Title preview -->
+      <div id="aiGenPreview" class="sg-title-preview" style="display:none;">
+        <div class="sg-title-eyebrow">✦ STORY TITLE</div>
+        <div id="genTitlePreview" class="sg-title-text"></div>
       </div>
 
-      <button class="btn btn-primary" id="genIdeaBtn" onclick="generateAiStoryIdea()" style="width:100%;padding:13px;font-size:14px;">
-        ✨ AI se Story Idea Generate Karo
-      </button>
+      <!-- Buttons -->
+      <div class="sg-btn-row">
+        <button class="sg-btn-gen" id="genIdeaBtn" onclick="generateAiStoryIdea()">
+          ✦ Generate Idea
+        </button>
+        <button class="sg-btn-start" id="startBtn" onclick="startStudio()" style="display:none;">
+          ▶ Shuru Karo
+        </button>
+      </div>
+
+      <!-- Link Previous Season -->
+      <div class="card-block" id="linkSeasonBlock" style="display:none;">
+        <div class="card-title">🔗 Previous Season Linked</div>
+        <div style="font-size:11px;color:var(--bone-dim);line-height:1.5;">Pichle season se characters consistent rahenge.</div>
+        <div id="linkSeasonList"></div>
+        <button class="btn btn-ghost" style="font-size:11px;padding:7px 12px;" onclick="clearLinkedSeason()">✕ Link Hatao</button>
+      </div>
+
     </div>
-
-    <button class="btn btn-primary" id="startBtn" onclick="startStudio()" style="width:100%;padding:16px;font-size:15px;display:none;margin-bottom:80px;">
-      🎃 Episode 1 Shuru Karo
-    </button>
-
-    <!-- Link Previous Season -->
-    <div class="card-block" id="linkSeasonBlock" style="display:none;">
-      <div class="card-title">🔗 Previous Season Linked</div>
-      <div style="font-size:12px;color:var(--bone-dim);line-height:1.6;">Pichle season se characters aur story consistent rahegi.</div>
-      <div id="linkSeasonList"></div>
-      <button class="btn btn-ghost" style="font-size:12px;" onclick="clearLinkedSeason()">✕ Link Hatao</button>
-    </div>
-
-
-
   </div>
 </div>
 
