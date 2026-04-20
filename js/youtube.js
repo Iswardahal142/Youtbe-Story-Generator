@@ -1,4 +1,42 @@
 // ══ YOUTUBE PANEL ══
+// ══ CHANNEL NAME AUTO-FETCH ══
+async function ytAutoFetchChannelName() {
+  try {
+    const data = await fetch('/api/youtube').then(r => r.json());
+    const name = data.channelName || data.channel_name || '';
+    if (name) {
+      // state mein save karo
+      if (window.state) state.channel = name;
+      // Setup screen ka input update karo (readonly)
+      const inp = document.getElementById('cfgChannel');
+      if (inp) {
+        inp.value = name;
+        inp.readOnly = true;
+        inp.style.cssText += ';opacity:0.6;cursor:not-allowed;background:#0a000a;border-color:#220022;';
+        // Label ke baad "auto" badge add karo
+        const label = inp.closest('.field')?.querySelector('label');
+        if (label && !label.querySelector('.yt-auto-badge')) {
+          const badge = document.createElement('span');
+          badge.className = 'yt-auto-badge';
+          badge.style.cssText = 'margin-left:6px;font-size:9px;color:#ff4444;background:rgba(200,0,0,0.12);border:1px solid #440000;padding:1px 6px;border-radius:10px;letter-spacing:1px;vertical-align:middle;';
+          badge.textContent = '▶ YouTube se auto';
+          label.appendChild(badge);
+        }
+      }
+    }
+  } catch(e) {
+    // Silent fail — default value rehne do
+  }
+}
+
+// App load hone par auto-fetch karo
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => setTimeout(ytAutoFetchChannelName, 1500));
+} else {
+  setTimeout(ytAutoFetchChannelName, 1500);
+}
+
+
 
 // ── Checklist ──
 const YT_CHECK_SK = 'kaali_raat_yt_checks';
