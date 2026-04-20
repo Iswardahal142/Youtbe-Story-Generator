@@ -2,31 +2,43 @@
 function goToAnalysis() {
   if (!state.storyChunks.length) { toast('⚠️ Pehle kuch story likho!'); return; }
   showScreen('screenAnalysis');
-  // Only load saved scenes/chars if they belong to current episode
   const savedEpId = state.savedScenesEpId;
   const curEpId = state.currentEpId;
-  if (state.savedScenes && savedEpId === curEpId) {
+  const sameEp = savedEpId === curEpId;
+
+  // Scenes — only show if this story's scenes are generated
+  const scenesOut = document.getElementById('scenesOutput');
+  const genScenesBtn = document.getElementById('genScenesBtn');
+  if (state.savedScenes && sameEp) {
     renderScenes(state.savedScenes);
+    if (genScenesBtn) genScenesBtn.textContent = '🔄 Dobara Generate Karo';
   } else {
-    // Clear stale scenes from previous episode
-    document.getElementById('scenesOutput').innerHTML = '';
     state.savedScenes = null;
+    if (scenesOut) scenesOut.innerHTML = '';
+    if (genScenesBtn) genScenesBtn.textContent = '🎬 Scene Breakdown Generate Karo';
   }
-  if (state.savedChars && savedEpId === curEpId) {
+
+  // Characters — only show if this story's chars are generated
+  const charsOut = document.getElementById('charsOutput');
+  const genCharsBtn = document.getElementById('genCharsBtn');
+  if (state.savedChars && sameEp) {
     renderChars(state.savedChars);
+    if (genCharsBtn) genCharsBtn.textContent = '🔄 Dobara Generate Karo';
   } else {
-    document.getElementById('charsOutput').innerHTML = '';
     state.savedChars = null;
+    if (charsOut) charsOut.innerHTML = '';
+    if (genCharsBtn) genCharsBtn.textContent = '👤 Character List Generate Karo';
   }
+
+  // Hide YT panel by default
+  const ytPanel = document.getElementById('panelYt');
+  if (ytPanel) ytPanel.style.display = 'none';
 }
 
 function switchTab(tab) {
-  document.getElementById('tabScenes').classList.toggle('active', tab === 'scenes');
-  document.getElementById('tabChars').classList.toggle('active', tab === 'chars');
-  document.getElementById('tabYt').classList.toggle('active', tab === 'yt');
-  document.getElementById('panelScenes').style.display = tab === 'scenes' ? 'flex' : 'none';
-  document.getElementById('panelChars').style.display = tab === 'chars' ? 'flex' : 'none';
-  document.getElementById('panelYt').style.display = tab === 'yt' ? 'flex' : 'none';
+  // Only YT panel is toggled — scenes and chars are always shown
+  const ytPanel = document.getElementById('panelYt');
+  if (ytPanel) ytPanel.style.display = tab === 'yt' ? 'flex' : 'none';
   if (tab === 'yt') {
     renderYtChecklist();
     if (window.updateYtStatusBadge) updateYtStatusBadge();
