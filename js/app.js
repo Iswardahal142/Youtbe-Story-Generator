@@ -61,18 +61,30 @@ async function renderMyStories() {
     const words     = epList.reduce((s, e) => s + (e.wordCount || 0), 0);
     const dateStr   = latest.savedAt ? new Date(latest.savedAt).toLocaleDateString('hi-IN') : '';
     return `
-      <div class="story-card" onclick="loadEpisode('${latest.id}'); bnavSetActive('generate');">
-        <div class="story-card-title">${title}</div>
+      <div class="story-card" data-story-title="${title}" onclick="loadEpisode('${latest.id}'); bnavSetActive('generate');">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">
+          <div class="story-card-title" style="flex:1;">${title}</div>
+          <button class="ep-row-del" onclick="deleteStory(event,'${title}'); renderMyStories();">🗑</button>
+        </div>
         <div class="story-card-meta">
           <span class="scene-tag">${seasons}</span>
           <span class="scene-tag">${totalEps} ep${totalEps > 1 ? 's' : ''}</span>
           <span class="scene-tag" style="color:${allDone ? '#44bb66' : '#cc8822'};border-color:${allDone ? '#1a4a22' : '#3a2200'};">${allDone ? '✅ Complete' : '🔄 Ongoing'}</span>
         </div>
-        <div class="story-card-words">${words.toLocaleString()} words · ${dateStr}</div>
-        <button class="ep-row-del" onclick="deleteStory(event,'${title}'); renderMyStories();">🗑</button>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:4px;">
+          <div class="story-card-words">${words.toLocaleString()} words · ${dateStr}</div>
+          <div class="yt-views-badge" style="font-size:11px;color:#555;">
+            <span style="color:#333;font-size:10px;">▶ loading...</span>
+          </div>
+        </div>
       </div>
     `;
   }).join('');
+
+  // Auto-match YouTube views (silent — no loading state needed on card)
+  if (window.ytMatchMyStories) {
+    window.ytMatchMyStories().catch(() => {});
+  }
 }
 
 // ══ BOTTOM NAV ══
@@ -97,6 +109,9 @@ function bnavGo(tab) {
     renderMyStories();
   } else if (tab === 'youtube') {
     goToYtExport();
+    setTimeout(function() {
+      if (window.ytTabComparison) window.ytTabComparison().catch(function(){});
+    }, 300);
   } else if (tab === 'profile') {
     showScreen('screenProfile');
   }
