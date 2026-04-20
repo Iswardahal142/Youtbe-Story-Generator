@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gemini Image Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --border: #222230;
+    --accent: #7c6aff;
+    --accent2: #ff6a9b;
+    --text: #e8e8f0;
+    --muted: #555568;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 40px 20px;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    top: -200px; left: -200px;
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(124,106,255,0.12) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+  body::after {
+    content: '';
+    position: fixed;
+    bottom: -200px; right: -200px;
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, rgba(255,106,155,0.08) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    width: 100%;
+    max-width: 640px;
+    position: relative;
+    z-index: 1;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 40px;
+  }
+
+  .logo-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(124,106,255,0.12);
+    border: 1px solid rgba(124,106,255,0.3);
+    border-radius: 99px;
+    padding: 6px 14px;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 0.08em;
+    margin-bottom: 20px;
+  }
+
+  .dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.8); }
+  }
+
+  h1 {
+    font-size: clamp(28px, 6vw, 42px);
+    font-weight: 800;
+    line-height: 1.1;
+    background: linear-gradient(135deg, #fff 30%, var(--accent) 70%, var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 10px;
+  }
+
+  .subtitle {
+    color: var(--muted);
+    font-size: 14px;
+    font-family: 'Space Mono', monospace;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 16px;
+    transition: border-color 0.2s;
+  }
+  .card:focus-within {
+    border-color: rgba(124,106,255,0.4);
+  }
+
+  label {
+    display: block;
+    font-size: 11px;
+    font-family: 'Space Mono', monospace;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  input, textarea {
+    width: 100%;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 16px;
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  input:focus, textarea:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(124,106,255,0.15);
+  }
+
+  textarea {
+    resize: none;
+    height: 100px;
+    line-height: 1.6;
+    letter-spacing: 0;
+  }
+
+  .quick-prompts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+  }
+  .chip {
+    background: rgba(124,106,255,0.1);
+    border: 1px solid rgba(124,106,255,0.2);
+    border-radius: 99px;
+    padding: 5px 12px;
+    font-size: 12px;
+    color: rgba(255,255,255,0.6);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .chip:hover {
+    background: rgba(124,106,255,0.2);
+    border-color: var(--accent);
+    color: #fff;
+  }
+
+  .generate-btn {
+    width: 100%;
+    padding: 16px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border: none;
+    border-radius: 12px;
+    color: #fff;
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: 0.03em;
+    transition: opacity 0.2s, transform 0.1s, box-shadow 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .generate-btn:hover:not(:disabled) {
+    opacity: 0.92;
+    box-shadow: 0 8px 30px rgba(124,106,255,0.35);
+    transform: translateY(-1px);
+  }
+  .generate-btn:active:not(:disabled) { transform: translateY(0); }
+  .generate-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .result-area {
+    margin-top: 24px;
+    display: none;
+  }
+  .result-area.visible { display: block; }
+
+  .result-label {
+    font-size: 11px;
+    font-family: 'Space Mono', monospace;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  .image-wrapper {
+    position: relative;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    background: #0d0d15;
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .image-wrapper img {
+    width: 100%;
+    display: block;
+    border-radius: 16px;
+  }
+
+  .loader {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    padding: 48px;
+  }
+  .spinner {
+    width: 44px; height: 44px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-right-color: var(--accent2);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loader-text {
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+    animation: blink 1.5s infinite;
+  }
+  @keyframes blink { 0%,100% { opacity:1 } 50% { opacity:0.4 } }
+
+  .error-box {
+    background: rgba(255,80,80,0.08);
+    border: 1px solid rgba(255,80,80,0.25);
+    border-radius: 10px;
+    padding: 14px 16px;
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    color: #ff8080;
+    line-height: 1.6;
+    margin-top: 12px;
+    display: none;
+  }
+  .error-box.visible { display: block; }
+
+  .download-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 14px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 16px;
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background 0.15s;
+  }
+  .download-btn:hover { background: rgba(255,255,255,0.1); }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div class="logo-badge"><span class="dot"></span> GEMINI IMAGE GEN</div>
+    <h1>Image Generator</h1>
+    <p class="subtitle">Powered by FLUX.1 via Hugging Face</p>
+  </header>
+
+  <!-- PROMPT -->
+  <div class="card">
+    <label>✏️ Prompt</label>
+    <textarea id="prompt" placeholder="Describe the image you want to generate..."></textarea>
+    <div class="quick-prompts">
+      <span class="chip" onclick="setPrompt('A futuristic city at night with neon lights')">🌆 Neon City</span>
+      <span class="chip" onclick="setPrompt('A cute cat sitting on a cloud, digital art')">🐱 Cat Art</span>
+      <span class="chip" onclick="setPrompt('Abstract colorful fluid art, 4K')">🎨 Abstract</span>
+      <span class="chip" onclick="setPrompt('Beautiful mountain landscape at golden hour')">🏔️ Mountain</span>
+      <span class="chip" onclick="setPrompt('Cyberpunk samurai warrior, highly detailed')">⚔️ Samurai</span>
+    </div>
+  </div>
+
+  <button class="generate-btn" id="genBtn" onclick="generate()">
+    ✦ Generate Image
+  </button>
+
+  <div class="error-box" id="errorBox"></div>
+
+  <!-- RESULT -->
+  <div class="result-area" id="resultArea">
+    <div class="result-label">Generated Image</div>
+    <div class="image-wrapper" id="imageWrapper">
+      <div class="loader" id="loader">
+        <div class="spinner"></div>
+        <span class="loader-text">Generating your image...</span>
+      </div>
+    </div>
+    <a class="download-btn" id="downloadBtn" style="display:none" download="gemini-image.png">
+      ⬇ Download Image
+    </a>
+  </div>
+</div>
+
+<script>
+function setPrompt(text) {
+  document.getElementById('prompt').value = text;
+}
+
+// URL param se prompt auto-fill
+(function() {
+  const params = new URLSearchParams(window.location.search);
+  const p = params.get('prompt');
+  if (p) {
+    window.addEventListener('DOMContentLoaded', function() {
+      document.getElementById('prompt').value = p;
+    });
+  }
+})();
+
+async function generate() {
+  const prompt = document.getElementById('prompt').value.trim();
+  const errorBox = document.getElementById('errorBox');
+  const resultArea = document.getElementById('resultArea');
+  const imageWrapper = document.getElementById('imageWrapper');
+  const downloadBtn = document.getElementById('downloadBtn');
+  const genBtn = document.getElementById('genBtn');
+
+  // Reset
+  errorBox.className = 'error-box';
+  downloadBtn.style.display = 'none';
+
+  if (!prompt) { showError('Prompt likhna toh padega bhai!'); return; }
+
+  // Show loader
+  resultArea.className = 'result-area visible';
+  imageWrapper.innerHTML = `<div class="loader"><div class="spinner"></div><span class="loader-text">Generating your image...</span></div>`;
+  genBtn.disabled = true;
+  genBtn.textContent = '⏳ Generating...';
+
+  try {
+    const response = await fetch('/api/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt })
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      const msg = err?.error || `HTTP ${response.status} error`;
+      throw new Error(msg);
+    }
+
+    const blob = await response.blob();
+    const imgSrc = URL.createObjectURL(blob);
+    imageWrapper.innerHTML = `<img src="${imgSrc}" alt="Generated image" />`;
+
+    downloadBtn.href = imgSrc;
+    downloadBtn.download = 'generated-image.png';
+    downloadBtn.style.display = 'inline-flex';
+
+  } catch (err) {
+    imageWrapper.innerHTML = '';
+    resultArea.className = 'result-area';
+    showError(err.message);
+  } finally {
+    genBtn.disabled = false;
+    genBtn.textContent = '✦ Generate Image';
+  }
+}
+
+function showError(msg) {
+  const errorBox = document.getElementById('errorBox');
+  errorBox.textContent = '⚠ ' + msg;
+  errorBox.className = 'error-box visible';
+}
+</script>
+</body>
+</html>
