@@ -9,7 +9,7 @@ function toast(msg) {
 }
 
 // ══ INIT ══
-// Firebase auth ready hone ke baad call hoga
+// Firebase auth ready hone ke baad call hoga (firebase.js triggers this)
 async function _appLoad() {
   await load();
   restoreSetupForm();
@@ -17,69 +17,73 @@ async function _appLoad() {
 }
 window._appLoad = _appLoad;
 
-window.addEventListener('load', () => {
-  window.db_onReady(async () => {
-    // Agar user already logged in hai (page refresh) toh seedha load karo
-    // renderAuthUI firebase.js mein handle karega — yahan wait karo
-    setTimeout(async () => {
-      const appContent = document.getElementById('appContent');
-      if (appContent && appContent.style.display !== 'none') {
-        await _appLoad();
-      }
-    }, 800);
-  });
-});
-
-// ══ THUMBNAIL COPY / MODAL ══
+// ══ THUMBNAIL / IMAGE MODAL ══
 function copyThumbPrompt(btn, text) {
-  navigator.clipboard.writeText(text).then(function() {
+  navigator.clipboard.writeText(text).then(function () {
     const orig = btn.innerHTML;
     btn.innerHTML = '✅ Copied!';
     btn.style.borderColor = '#44bb66';
     btn.style.color = '#44bb66';
-    setTimeout(function() { btn.innerHTML = orig; btn.style.borderColor = '#aa66ff'; btn.style.color = '#aa66ff'; }, 2000);
+    setTimeout(function () {
+      btn.innerHTML = orig;
+      btn.style.borderColor = '#aa66ff';
+      btn.style.color = '#aa66ff';
+    }, 2000);
   });
 }
 
-function openThumbModal(text) {
-  const iframe = document.getElementById('imgGenIframe');
-  iframe.src = '/Ai/index.html?prompt=' + encodeURIComponent(text);
-  document.getElementById('imgGenModal').style.display = 'block';
-  document.body.style.overflow = 'hidden';
-}
-
-// ══ IMAGE GENERATOR MODAL ══
+// ── Image Generator Modal ──────────────────────────
+// "Image Banao" button scene cards mein hota hai
 function openImgModal(btn) {
   const prompt = btn.dataset.prompt.replace(/&quot;/g, '"');
+  _launchImgModal(prompt);
+}
+
+// Thumbnail screen se open
+function openThumbModal(text) {
+  _launchImgModal(text);
+}
+
+function _launchImgModal(prompt) {
+  const modal  = document.getElementById('imgGenModal');
   const iframe = document.getElementById('imgGenIframe');
-  iframe.src = '/Ai/index.html?prompt=' + encodeURIComponent(prompt);
-  document.getElementById('imgGenModal').style.display = 'block';
+  if (!modal || !iframe) { console.warn('imgGenModal not found'); return; }
+  // Ai/index.html URL param se prompt auto-fill karta hai
+  iframe.src = 'Ai/index.html?prompt=' + encodeURIComponent(prompt);
+  modal.classList.add('open');
   document.body.style.overflow = 'hidden';
 }
 
 function closeImgModal() {
-  document.getElementById('imgGenIframe').src = '';
-  document.getElementById('imgGenModal').style.display = 'none';
+  const modal  = document.getElementById('imgGenModal');
+  const iframe = document.getElementById('imgGenIframe');
+  if (modal)  modal.classList.remove('open');
+  if (iframe) iframe.src = '';
   document.body.style.overflow = '';
 }
 
+// Modal background tap se band ho
+document.addEventListener('DOMContentLoaded', function () {
+  const modal = document.getElementById('imgGenModal');
+  if (modal) {
+    modal.addEventListener('click', function (e) {
+      if (e.target === modal) closeImgModal();
+    });
+  }
+});
+
+// ── Scene prompt copy button ───────────────────────
 function copyScenePrompt(btn) {
   const text = btn.dataset.prompt.replace(/&quot;/g, '"');
-  navigator.clipboard.writeText(text).then(function() {
+  navigator.clipboard.writeText(text).then(function () {
     const orig = btn.innerHTML;
     btn.innerHTML = '✅ Copied!';
     btn.style.borderColor = '#44bb66';
     btn.style.color = '#44bb66';
-    setTimeout(function() {
+    setTimeout(function () {
       btn.innerHTML = orig;
       btn.style.borderColor = '#440000';
       btn.style.color = '#cc4444';
     }, 2000);
   });
 }
-
-// Modal background tap se band ho
-const _modal = document.getElementById('imgGenModal');
-if (_modal) _modal.addEventListener('click', function(e) {
-  if (e.target === this) closeImgModal();
-});
