@@ -285,6 +285,44 @@ function parseScenes(raw) {
   return scenes;
 }
 
+// ══ AUTO CHARACTER GENERATION (called after story ends) ══
+async function generateCharactersAuto() {
+  const btn = document.getElementById('genCharsBtn');
+  const out = document.getElementById('charsOutput');
+  if (!state.storyChunks.length) return;
+  if (btn) { btn.disabled = true; btn.innerHTML = '<div class="spinner"></div> Auto-generating...'; }
+  if (out) out.innerHTML = '<div class="analysis-loading"><div class="spinner"></div>Characters identify ho rahe hain...</div>';
+
+  const storyText = state.storyChunks.map(c => c.text).join('\n\n');
+  try {
+    const res = await fetch('/api/ai', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'openai/gpt-4.1-nano',
+        messages: [{
+          role: 'user',
+          content: `Yeh Hindi horror story hai:\n\n${storyText}\n\nIs story mein jo bhi characters hain unki list banao. Har character ke liye EXACTLY yeh format use karo:\n\nCHAR_START\nname: Character ka naam\nrole: Protagonist / Antagonist / Supporting / Supernatural\ndescription: Kaisa dikhta/dikhti hai, uski personality (2-3 lines)\nappearance: Story mein pehli baar kab aaya/aayi (ek line)\nimgprompt: [English only] Detailed image generation prompt for THIS character only. cinematic realistic photography, dark horror. Describe: physical appearance (age, build, face, hair, eyes, skin), clothing, expression, pose, background hint. Make it detailed for consistent character art.\nCHAR_END\n\nSirf yeh format, koi extra text nahi.`
+        }],
+        max_tokens: 2000,
+        temperature: 0.4,
+      })
+    });
+    const data = await res.json();
+    const raw = data.choices?.[0]?.message?.content || '';
+    const chars = parseCharacters(raw);
+    if (chars.length) {
+      state.savedChars = chars;
+      state.savedScenesEpId = state.currentEpId;
+      save();
+      saveCurrentEpisode(true);
+      if (out) renderChars(chars);
+      toast(`👤 ${chars.length} characters ready!`);
+    }
+  } catch (err) { /* silent fail */ }
+  if (btn) { btn.disabled = false; btn.innerHTML = '🔄 Dobara Generate Karo'; }
+}
+
 async function generateCharacters() {
   const btn = document.getElementById('genCharsBtn');
   const out = document.getElementById('charsOutput');
@@ -724,6 +762,8 @@ async function generateThumbPrompt() {
         </div>
         <button class="btn btn-ghost" onclick="generateThumbPrompt()" style="font-size:12px;margin-top:8px;">🔄 Alag Style Try Karo</button>
       `;
+      // Mark thumbnail as generated
+      if (window._ytSetStatus) { _ytSetStatus('thumbnail', true); updateYtStatusBadge(); }
     }
 
     } catch (err) {
