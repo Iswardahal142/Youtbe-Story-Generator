@@ -50,26 +50,18 @@ async function generateAiStoryIdea() {
   btn.innerHTML = '<div class="spinner"></div> Check ho raha hai...';
   const uploaded = await _checkLastEpUploaded();
   if (!uploaded) {
+    // Button hide karo, warning message show karo
     btn.disabled = false;
     btn.innerHTML = '<span class="sg-gen-icon">✦</span> Generate Story Idea';
-    // Last episode dhundho aur redirect karo
-    const eps = await window.db_getEpisodes();
-    if (eps && eps.length) {
-      const last = eps[0];
-      const baseTitle = (last.title || '').split(' | ')[0].trim();
-      const season    = last.season || 'SEASON 1';
-      toast('⚠️ Pehle last episode YouTube pe upload karo!');
-      setTimeout(() => {
-        bnavSetActive('stories');
-        showScreen('screenMyStories');
-        renderMyStories().then(() => {
-          setTimeout(() => openSeasonsScreen(baseTitle).then(() => openEpisodesScreen(baseTitle, season)), 400);
-        });
-      }, 600);
-    }
+    const warn = document.getElementById('uploadWarningMsg');
+    if (warn) { warn.style.display = 'block'; btn.style.display = 'none'; }
     return;
   }
 
+  // Uploaded — warning hatao, button dikhao
+  const warn = document.getElementById('uploadWarningMsg');
+  if (warn) warn.style.display = 'none';
+  btn.style.display = '';
   btn.disabled = false;
   btn.innerHTML = '<div class="spinner"></div> Soch raha hai...';
 
