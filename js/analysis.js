@@ -570,6 +570,8 @@ async function saveCurrentEpisode(silent = false) {
     savedScenes: state.savedScenes || null,
     savedChars: state.savedChars || null,
     savedNarration: state.savedNarration || null,
+    ytTitle: state.ytTitle || null,
+    ytDesc: state.ytDesc || null,
   };
   await window.db_saveEpisode(ep);
   if (!silent) toast('💾 Episode saved!');
