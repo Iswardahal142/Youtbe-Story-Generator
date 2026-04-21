@@ -13,9 +13,44 @@ async function saveUsedIdea(title) {
   await window.db_saveUsedIdeas(used);
 }
 
+// ── Check: last episode uploaded hai? ──
+async function _checkLastEpUploaded() {
+  try {
+    const eps = await window.db_getEpisodes();
+    if (!eps || !eps.length) return true; // Pehli story — allow karo
+    const last = eps[0]; // Most recent
+    return await _isEpisodeUploaded(last);
+  } catch { return true; }
+}
+
 async function generateAiStoryIdea() {
   const btn = document.getElementById('genIdeaBtn');
+
+  // Block check — last episode uploaded nahi toh generate nahi
   btn.disabled = true;
+  btn.innerHTML = '<div class="spinner"></div> Check ho raha hai...';
+  const uploaded = await _checkLastEpUploaded();
+  if (!uploaded) {
+    btn.disabled = false;
+    btn.innerHTML = '<span class="sg-gen-icon">✦</span> Generate Story Idea';
+    // Last episode dhundho aur redirect karo
+    const eps = await window.db_getEpisodes();
+    if (eps && eps.length) {
+      const last = eps[0];
+      const baseTitle = (last.title || '').split(' | ')[0].trim();
+      const season    = last.season || 'SEASON 1';
+      toast('⚠️ Pehle last episode YouTube pe upload karo!');
+      setTimeout(() => {
+        bnavSetActive('stories');
+        showScreen('screenMyStories');
+        renderMyStories().then(() => {
+          setTimeout(() => openSeasonsScreen(baseTitle).then(() => openEpisodesScreen(baseTitle, season)), 400);
+        });
+      }, 600);
+    }
+    return;
+  }
+
   btn.innerHTML = '<div class="spinner"></div> Soch raha hai...';
 
   const usedIdeas = await getUsedIdeas();
@@ -258,11 +293,18 @@ ABSOLUTE RULES — VIOLATING THESE IS NOT ALLOWED:
 6. Do NOT end the story yourself — keep continuing until told "STORY END KARO".
 7. Dialogues must also be in Hindi Devanagari only.
 
-WRONG (never do this): "It was a dark night. Ravi saw something strange."
-RIGHT (always do this): "रात का घना अंधेरा छाया हुआ था। रवि ने कुछ अजीब देखा..."${state.seasonBible ? `
+EMOTION TAGS — MANDATORY (ElevenLabs narration ke liye):
+Sahi jagah pe yeh tags lagao text ke andar:
+- [scared] → character darta hai, kaanpti awaaz
+- [whisper] → dheere bolna, raaz ki baat  
+- [laugh] → hasna (creepy bhi ho sakta hai)
+- [cry] → rona, dard
+- [angry] → gusse mein
+- [shocked] → achanak kuch dekha/suna
+- [calm] → normal narration (default)
 
-PREVIOUS SEASON CONTINUITY (MUST FOLLOW):
-${state.seasonBible}` : ''}`;
+Example: "[scared] उसके हाथ काँप रहे थे।" ya "[whisper] 'कोई है यहाँ?'"
+Sirf dialogue aur emotional moments pe lagao, poore paragraphs pe nahi.${state.seasonBible ? `\n\nPREVIOUS SEASON CONTINUITY (MUST FOLLOW):\n${state.seasonBible}` : ''}\`;
 
   // Build conversation history
   const messages = [];
