@@ -29,6 +29,8 @@ async function load() {
     state = { ...state, ...d };
     // Purana hardcoded channel name clear karo
     if (state.channel === 'KAALI RAAT') state.channel = '';
+    // Refresh ke baad bhi ytSelectedTitle restore ho
+    if (state.ytTitle) window._ytSelectedTitle = state.ytTitle;
   }
 }
 
@@ -60,7 +62,6 @@ function goToThumb() { showScreen('screenThumb'); }
 function restoreSetupForm() {
   const inp = document.getElementById('cfgChannel');
   if (inp) {
-    // YouTube se fetched name hamesha priority
     const name = window.ytFetchedChannelName || (state.channel !== 'KAALI RAAT' ? state.channel : '') || '';
     inp.value = name;
     inp.placeholder = name ? '' : 'Channel ID not set';
