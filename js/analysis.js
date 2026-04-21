@@ -502,7 +502,13 @@ async function startNextSeason() {
   state.currentEpId = null;
   state.savedScenes = null;
   state.savedChars = null;
+  state.savedNarration = null;
   state.linkedSeasonId = state.currentEpId;
+  // Naye season ke liye ytTitle/ytDesc reset
+  state.ytTitle = null;
+  state.ytDesc = null;
+  state.title = state.title.split(' | ')[0].trim(); // Base title rakhlo
+  window._ytSelectedTitle = null;
   // seasonBible stays for continuity
 
   save();
