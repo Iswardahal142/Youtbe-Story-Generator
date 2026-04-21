@@ -488,26 +488,59 @@ async function generateSeasonBible() {
   btn.innerHTML = '📖 Season Bible Banao';
 }
 
-async function startNextSeason() {
-  const prevBible = state.seasonBible;
-  if (!prevBible) { toast('⚠️ Pehle Season Bible banao!'); return; }
+// Auto season transition — manually call nahi hota, startNextEpisode se trigger hoga jab 5+ episodes ho jayein
+async function _autoGenerateSeasonBible() {
+  if (!state.storyChunks.length) return;
+  const storyText = state.storyChunks.map(c => c.text).join('\n\n');
+  try {
+    const res = await fetch('/api/ai', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'openai/gpt-4.1-nano',
+        messages: [{
+          role: 'user',
+          content: `Yeh ${state.season} ki horror story hai titled "${state.title.split(' | ')[0]}":\n\n${storyText.slice(0,2000)}\n\nIs story ka ek detailed SEASON BIBLE banao. Include:\n1. CHARACTERS: Naam, role, kya hua\n2. MAIN PLOT: Major events\n3. UNRESOLVED MYSTERIES\n4. CLIFFHANGER\n5. WORLD RULES\n6. NEXT SEASON HOOKS\n\nHindi mein likho.`
+        }],
+        max_tokens: 1000,
+        temperature: 0.3,
+      })
+    });
+    const data = await res.json();
+    const bible = data.choices?.[0]?.message?.content || '';
+    if (bible) {
+      state.seasonBible = bible;
+      save();
+    }
+  } catch (e) { /* silent */ }
+}
 
+async function startNextSeason() {
+  const prevEpId = state.currentEpId;
   const seasonMatch = state.season.match(/(\d+)/);
   const nextNum = seasonMatch ? parseInt(seasonMatch[1]) + 1 : 2;
+  const baseTitle = state.title.split(' | ')[0].trim();
+
+  // Bible nahi hai toh background mein banao
+  if (!state.seasonBible && state.storyChunks.length) {
+    toast('📖 Season Bible generate ho rahi hai...');
+    await _autoGenerateSeasonBible();
+  }
 
   state.season = `SEASON ${nextNum}`;
   state.epNum = 'EP 01';
+  state.title = baseTitle; // Sirf base title rakhlo
   state.storyChunks = [];
   state.storyEnded = false;
-  state.currentEpId = null;
+  state.currentEpId = Date.now().toString();
   state.savedScenes = null;
   state.savedChars = null;
   state.savedNarration = null;
-  state.linkedSeasonId = state.currentEpId;
-  // Naye season ke liye ytTitle/ytDesc reset
+  state.savedScenesEpId = null;
+  state.characterBible = null;
+  state.linkedSeasonId = prevEpId; // Season 1 ka last ep linked
   state.ytTitle = null;
   state.ytDesc = null;
-  state.title = state.title.split(' | ')[0].trim(); // Base title rakhlo
   window._ytSelectedTitle = null;
   // seasonBible stays for continuity
 
@@ -515,7 +548,7 @@ async function startNextSeason() {
   showScreen('screenSetup');
   restoreSetupForm();
   await renderLinkSeasonBlock();
-  toast(`🎬 Season ${nextNum} ready! Bible linked.`);
+  toast(`🎬 ${state.season} ready! Season 1 Bible linked — characters consistent rahenge.`);
 }
 
 async function renderLinkSeasonBlock() {
@@ -849,7 +882,7 @@ SIRF HINDI DEVANAGARI mein likho. Sirf ElevenLabs break tags allowed hain.`
           },
           {
             role: 'user',
-            content: `Yeh horror story hai:\n\n${fullStory}\n\nAb is poori story ka ElevenLabs-ready HINDI NARRATION script likho.\n\nZARRORI RULES:\n- SIRF HINDI DEVANAGARI mein likho — ek bhi English word nahi (sirf break tags allowed)\n- Poori story ek flow mein — koi "Part 1, Part 2" nahi\n- Har scary/tense moment ke baad <break time="1.0s" /> lagao\n- Dialogue se pehle aur baad mein <break time="0.5s" /> lagao\n- Climax ya twist ke baad <break time="1.5s" /> lagao\n- Story ke bilkul shuru mein <break time="0.8s" /> lagao\n- Koi heading mat lagao, seedha narration shuru karo\n\nExample:\nRaat ke do baj rahe the... <break time="1.0s" /> jab Ramesh ne woh awaaz suni. <break time="0.8s" /> "Kaun hai wahan?" <break time="0.5s" /> usne kaanpte huye pucha. <break time="1.5s" />\n\nAb poori story is style mein likho:`
+            content: `Yeh horror story hai:\n\n${fullStory}\n\nAb is poori story ka ElevenLabs-ready HINDI NARRATION script likho.\n\nZARRORI RULES:\n- SIRF HINDI DEVANAGARI mein likho — ek bhi English word nahi (sirf ElevenLabs tags allowed)\n- Poori story ek flow mein — koi "Part 1, Part 2" nahi\n- Koi heading mat lagao, seedha narration shuru karo\n\nELEVENLABS EMOTION TAGS — Zaroor use karo:\n- <break time="1.0s" /> — scary/tense moment ke baad\n- <break time="0.5s" /> — dialogue se pehle/baad\n- <break time="1.5s" /> — climax ya twist ke baad\n- <break time="0.8s" /> — story shuru mein\n- [laugh] — jab koi hasse (villain ki hansi, pagal character)\n- [fear] — jab character dare ya kaanpe\n- [whisper] — jab koi dheere bole ya raaz bataye\n- [gasp] — sudden shock ya surprise ke waqt\n- [cry] — jab koi roye ya dard mein ho\n\nExample:\nRaat ke do baj rahe the... <break time="1.0s" /> [whisper] jab Ramesh ne woh awaaz suni. <break time="0.8s" /> "Kaun hai wahan?" <break time="0.5s" /> [fear] usne kaanpte huye pucha. <break time="1.5s" /> Door se ek [laugh] ki goonjti hansi aayi...\n\nAb poori story is style mein likho — har emotion ke sahi jagah tags lagao:`
           }
         ]
       })
