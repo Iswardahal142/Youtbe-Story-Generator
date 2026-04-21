@@ -190,8 +190,7 @@ async function openEpisodesScreen(baseTitle, season) {
 
   const rows = sEps.map(ep => {
     const epYtTitle = (ep.title || '').split(' | ')[1] || ep.title || 'Untitled';
-    return '<div class="ms-ep-load-row" data-ep-id="' + ep.id + '" ' +
-        'style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid #0f0000;cursor:pointer;">' +
+    return '<div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid #0f0000;">' +
       '<div style="flex:1;min-width:0;">' +
         '<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;">' +
           '<span style="font-size:10px;color:#880000;font-weight:700;">' + (ep.epNum || 'EP 01') + '</span>' +
@@ -203,31 +202,16 @@ async function openEpisodesScreen(baseTitle, season) {
         '</div>' +
       '</div>' +
       '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0;">' +
-        '<button class="ms-ep-del-btn" data-ep-id="' + ep.id + '" data-base="' + safeBase + '" data-season="' + safeSeason + '" ' +
-          'style="background:transparent;border:1px solid #2a0000;color:#553333;font-size:11px;padding:4px 8px;border-radius:6px;cursor:pointer;">🗑</button>' +
-        '<span style="font-size:18px;color:#444;">›</span>' +
+        '<button id="del_' + ep.id + '" onclick="event.stopPropagation();_deleteEpisode(\'' + ep.id + '\',\'' + safeBase + '\',\'' + safeSeason + '\')" ' +
+          'style="background:transparent;border:1px solid #2a0000;color:#553333;font-size:11px;padding:4px 8px;border-radius:6px;cursor:pointer;">🗑 Delete</button>' +
+        '<button onclick="event.stopPropagation();loadEpisode(\'' + ep.id + '\');bnavSetActive(\'generate\');" ' +
+          'style="background:rgba(180,0,0,0.15);border:1px solid #440000;color:#cc4444;font-size:11px;padding:4px 8px;border-radius:6px;cursor:pointer;">✏️ Edit</button>' +
       '</div>' +
     '</div>';
   }).join('');
 
   container.innerHTML = '<div style="padding-bottom:80px;">' + rows + '</div>';
   _fillEpisodeYtBadges(sEps).catch(() => {});
-
-  // Event delegation
-  container.querySelectorAll('.ms-ep-load-row').forEach(row => {
-    row.addEventListener('click', async function() {
-      const id = this.dataset.epId;
-      if (!id) return;
-      await loadEpisode(id);
-      bnavSetActive('generate');
-    });
-  });
-  container.querySelectorAll('.ms-ep-del-btn').forEach(btn => {
-    btn.addEventListener('click', function(e) {
-      e.stopPropagation();
-      _deleteEpisode(this.dataset.epId, this.dataset.base, this.dataset.season);
-    });
-  });
 }
 
 async function _fillEpisodeYtBadges(sEps) {
@@ -282,24 +266,7 @@ async function _fillEpisodeYtBadges(sEps) {
 async function _deleteEpisode(epId, baseTitle, season) {
   const ep = await window.db_getEpisode(epId);
   if (ep) {
-    // Only block if DEFINITELY uploaded — any error = allow delete
-    let uploaded = false;
-    try {
-      if (window._fetchYtVideos && window._ytMatchScore) {
-        const data = await window._fetchYtVideos();
-        const { videos } = data || {};
-        if (videos && videos.length) {
-          const matchTitle = ep.ytTitle || (ep.title || '').split(' | ')[1] || ep.title || '';
-          let best = 0;
-          videos.forEach(v => {
-            const s = window._ytMatchScore(matchTitle, v.title, v.description);
-            if (s > best) best = s;
-          });
-          uploaded = best >= 40;
-        }
-      }
-    } catch { uploaded = false; }
-
+    const uploaded = await _isEpisodeUploaded(ep);
     if (uploaded) {
       toast('❌ YouTube pe upload hai — delete nahi kar sakte!');
       return;
@@ -308,30 +275,7 @@ async function _deleteEpisode(epId, baseTitle, season) {
   if (!confirm('Is episode ko delete karo?')) return;
   await window.db_deleteEpisode(epId);
   toast('🗑 Episode delete ho gaya');
-
-  // Check remaining episodes in this season
-  const remaining = await window.db_getEpisodes();
-  const seasonEps = remaining.filter(e =>
-    (e.title || '').split(' | ')[0].trim() === baseTitle &&
-    (e.season || 'SEASON 1') === season
-  );
-  if (seasonEps.length === 0) {
-    // Season empty — check if whole story is empty
-    const storyEps = remaining.filter(e =>
-      (e.title || '').split(' | ')[0].trim() === baseTitle
-    );
-    if (storyEps.length === 0) {
-      // Story completely deleted — go to My Stories
-      toast('🗑 Story bhi delete ho gayi');
-      showScreen('screenMyStories');
-      renderMyStories();
-    } else {
-      // Just this season empty — go back to seasons
-      openSeasonsScreen(baseTitle);
-    }
-  } else {
-    openEpisodesScreen(baseTitle, season);
-  }
+  openEpisodesScreen(baseTitle, season);
 }
 
 // ══ BOTTOM NAV ══
