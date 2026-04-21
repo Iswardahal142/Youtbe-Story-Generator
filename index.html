@@ -644,46 +644,54 @@
   <div class="setup-scroll-body">
     <div class="setup-card">
 
-      <!-- Channel badge -->
-      <div class="sg-channel-row">
-        <span class="sg-yt-dot"></span>
-        <span class="sg-channel-label">CHANNEL</span>
-        <input type="text" id="cfgChannel" value="" placeholder="Channel ID not set" maxlength="20" readonly class="sg-channel-input">
-      </div>
-
-      <!-- Genre -->
-      <div class="sg-block">
-        <div class="sg-block-label">GENRE</div>
-        <div class="preset-chips sg-chips" id="genreChips">
-          <div class="chip active" data-g="any">All</div>
-          <div class="chip" data-g="haveli">🏚 Haveli</div>
-          <div class="chip" data-g="jungle">🌲 Jungle</div>
-          <div class="chip" data-g="highway">🌙 Highway</div>
-          <div class="chip" data-g="gaon">🏘 Gaon</div>
-          <div class="chip" data-g="school">🏫 School</div>
-          <div class="chip" data-g="supernatural">👻 Super</div>
-          <div class="chip" data-g="psychological">🧠 Psycho</div>
+      <!-- Channel pill -->
+      <div class="sg-channel-pill">
+        <div class="sg-channel-pill-left">
+          <span class="sg-live-dot"></span>
+          <span class="sg-channel-meta">CHANNEL</span>
         </div>
+        <input type="text" id="cfgChannel" value="" placeholder="Channel ID not set" maxlength="30" readonly class="sg-channel-val">
       </div>
 
-      <!-- Title preview -->
-      <div id="aiGenPreview" class="sg-title-preview" style="display:none;">
-        <div class="sg-title-eyebrow">✦ STORY TITLE</div>
-        <div id="genTitlePreview" class="sg-title-text"></div>
-      </div>
+      <!-- Studio card -->
+      <div class="sg-studio-card">
 
-      <!-- Buttons -->
-      <div class="sg-btn-row">
-        <button class="sg-btn-gen" id="genIdeaBtn" onclick="generateAiStoryIdea()">
-          ✦ Generate Idea
+        <!-- Genre row -->
+        <div class="sg-label">GENRE / SETTING</div>
+        <div class="sg-genre-grid" id="genreChips">
+          <div class="sg-chip active" data-g="any">Kuch Bhi</div>
+          <div class="sg-chip" data-g="haveli">🏚 Haveli</div>
+          <div class="sg-chip" data-g="jungle">🌲 Jungle</div>
+          <div class="sg-chip" data-g="highway">🌙 Highway</div>
+          <div class="sg-chip" data-g="gaon">🏘 Gaon</div>
+          <div class="sg-chip" data-g="school">🏫 School</div>
+          <div class="sg-chip" data-g="supernatural">👻 Super</div>
+          <div class="sg-chip" data-g="psychological">🧠 Psycho</div>
+        </div>
+
+        <div class="sg-divider-line"></div>
+
+        <!-- Title preview -->
+        <div id="aiGenPreview" class="sg-title-box" style="display:none;">
+          <div class="sg-title-tag">STORY TITLE</div>
+          <div id="genTitlePreview" class="sg-title-main"></div>
+        </div>
+
+        <!-- Generate btn -->
+        <button class="sg-gen-btn" id="genIdeaBtn" onclick="generateAiStoryIdea()">
+          <span class="sg-gen-icon">✦</span>
+          Generate Story Idea
         </button>
-        <button class="sg-btn-start" id="startBtn" onclick="startStudio()" style="display:none;">
-          ▶ Shuru Karo
+
+        <!-- Start btn — shown after generation -->
+        <button class="sg-start-btn" id="startBtn" onclick="startStudio()" style="display:none;">
+          ▶ &nbsp;Episode Shuru Karo
         </button>
+
       </div>
 
       <!-- Link Previous Season -->
-      <div class="card-block" id="linkSeasonBlock" style="display:none;">
+      <div class="card-block" id="linkSeasonBlock" style="display:none;margin-bottom:80px;">
         <div class="card-title">🔗 Previous Season Linked</div>
         <div style="font-size:11px;color:var(--bone-dim);line-height:1.5;">Pichle season se characters consistent rahenge.</div>
         <div id="linkSeasonList"></div>
