@@ -260,9 +260,10 @@ JSON array format mein SIRF return karo:
       useB.onclick = async function() {
         window._ytSelectedTitle = t;
 
-        // story title update: "Original Title | YouTube Title"
+        // story title update: "Original Title | YouTube Title | SEASON EP"
         const baseTitle = state.title.split(' | ')[0].trim();
-        const newFullTitle = baseTitle + ' | ' + t;
+        const epPart = (state.season || 'SEASON 1') + ' ' + (state.epNum || 'EP 01');
+        const newFullTitle = baseTitle + ' | ' + t + ' | ' + epPart;
         state.title = newFullTitle;
         state.ytTitle = t;
         save();
