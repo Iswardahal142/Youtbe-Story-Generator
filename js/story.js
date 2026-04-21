@@ -20,17 +20,16 @@ async function _checkLastEpUploaded() {
     if (!eps || !eps.length) return true; // Pehli story — allow karo
     const last = eps[0];
 
-    // youtube_match.js se directly call karo
-    if (!window._fetchYtVideos || !window._ytMatchScore) {
-      toast('⚠️ YouTube match system load nahi hua, refresh karo!');
-      return false;
-    }
-    const data = await window._fetchYtVideos();
+    // YT functions available nahi — allow karo (YouTube setup nahi hua)
+    if (!window._fetchYtVideos || !window._ytMatchScore) return true;
+
+    let data;
+    try { data = await window._fetchYtVideos(); }
+    catch { return true; } // API fail = YouTube setup nahi, block mat karo
+
     const { videos } = data || {};
-    if (!videos || !videos.length) {
-      toast('⚠️ YouTube channel connect nahi hai ya videos nahi hain!');
-      return false;
-    }
+    if (!videos || !videos.length) return true; // No videos = channel empty, allow karo
+
     const matchTitle = last.ytTitle || (last.title || '').split(' | ')[1] || last.title || '';
     let best = 0;
     videos.forEach(v => {
@@ -38,9 +37,8 @@ async function _checkLastEpUploaded() {
       if (s > best) best = s;
     });
     return best >= 40;
-  } catch (err) {
-    toast('❌ Upload check fail: ' + (err.message || 'Unknown error'));
-    return false;
+  } catch {
+    return true; // Koi bhi unexpected error — allow karo, block mat karo
   }
 }
 
@@ -290,6 +288,44 @@ async function startNextEpisode() {
   toast(`▶ ${nextEpStr} shuru ho raha hai...`);
   await sendContinue(true);
 }
+async function endCurrentSeason() {
+  const sMatch = state.season.match(/(\d+)/);
+  const nextSeasonNum = sMatch ? parseInt(sMatch[1]) + 1 : 2;
+  const nextSeason = 'SEASON ' + nextSeasonNum;
+
+  const prevStory = state.storyChunks.map(c => c.text).join('\n\n');
+  const prevContext = `[${state.season} — "${state.title}" season summary]:\n${prevStory.slice(0, 1200)}...`;
+  state.seasonBible = (state.seasonBible || '') + '\n\n' + prevContext;
+
+  state.season  = nextSeason;
+  state.epNum   = 'EP 01';
+  state.storyChunks = [];
+  state.storyEnded  = false;
+  state.currentEpId = Date.now().toString();
+  state.savedScenes = null;
+  state.savedChars  = null;
+  state.savedScenesEpId = null;
+  state.characterBible  = null;
+  state.savedNarration  = null;
+  state.ytTitle = null;
+  state.ytDesc  = null;
+  state.title   = state.title.split(' | ')[0].trim();
+  window._ytSelectedTitle = null;
+  save();
+
+  _updateTopbar();
+  document.getElementById('endBanner').classList.remove('show');
+  document.getElementById('storyArea').innerHTML = '';
+  updateWordCount();
+
+  const divider = document.createElement('div');
+  divider.style.cssText = 'text-align:center;padding:16px;font-size:11px;letter-spacing:3px;color:#cc6600;text-transform:uppercase;';
+  divider.textContent = `━━━ ${nextSeason} SHURU ━━━`;
+  document.getElementById('storyArea').appendChild(divider);
+
+  toast(`🏁 ${nextSeason} shuru ho raha hai!`);
+}
+
 
 // ══ STORY GENERATION ══
 let isGenerating = false;
