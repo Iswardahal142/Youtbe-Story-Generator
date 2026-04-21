@@ -678,6 +678,12 @@
         </div>
 
         <!-- Generate btn -->
+        <div id="uploadWarningMsg" style="display:none;background:rgba(180,0,0,0.12);border:1px solid #440000;border-radius:10px;padding:14px 16px;text-align:center;">
+          <div style="font-size:20px;margin-bottom:6px;">⚠️</div>
+          <div style="font-size:13px;color:#ff6666;font-weight:700;margin-bottom:4px;">Pehle Story Upload Karo</div>
+          <div style="font-size:11px;color:#884444;margin-bottom:10px;">Last generated episode YouTube pe upload nahi hua. Pehle upload karo, phir nayi story banao.</div>
+          <button onclick="bnavGo('stories')" style="background:rgba(200,0,0,0.2);border:1px solid #660000;color:#ff4444;font-size:12px;padding:8px 16px;border-radius:8px;cursor:pointer;width:100%;">📺 My Stories mein dekho →</button>
+        </div>
         <button class="sg-gen-btn" id="genIdeaBtn" onclick="generateAiStoryIdea()">
           <span class="sg-gen-icon">✦</span>
           Generate Story Idea
