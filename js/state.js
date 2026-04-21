@@ -62,7 +62,7 @@ function goToThumb() { showScreen('screenThumb'); }
 function restoreSetupForm() {
   const inp = document.getElementById('cfgChannel');
   if (inp) {
-    const name = window.ytFetchedChannelName || (state.channel !== 'KAALI RAAT' ? state.channel : '') || '';
+    const name = window.ytFetchedChannelName || state.channel || '';
     inp.value = name;
     inp.placeholder = name ? '' : 'Channel ID not set';
   }
