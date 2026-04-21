@@ -319,7 +319,7 @@ async function generateYtDesc() {
           role: 'user',
           content: `Tu ek Hindi YouTube horror channel "${channelName}" ka SEO expert hai.
 
-Story: "${state.title}" | ${state.season} ${state.epNum}
+Story: "${window._ytSelectedTitle || state.title}" | ${state.season} ${state.epNum}
 Story text: ${storyText.slice(0,800)}
 
 Ek complete YouTube upload description banao. Exactly iss format mein:
