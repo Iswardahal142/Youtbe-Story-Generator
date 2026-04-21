@@ -212,6 +212,12 @@ async function startNextEpisode() {
   state.savedChars = null;
   state.savedScenesEpId = null;
   state.characterBible = null;
+  state.savedNarration = null;
+  // Naye episode ke liye ytTitle/ytDesc reset
+  state.ytTitle = null;
+  state.ytDesc = null;
+  state.title = state.title.split(' | ')[0].trim(); // Base title rakhlo
+  window._ytSelectedTitle = null;
   save();
 
   _updateTopbar();
