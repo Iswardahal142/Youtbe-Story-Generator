@@ -17,6 +17,8 @@ let state = {
   savedChars: null,
   characterBible: null,
   savedNarration: null,
+  ytTitle: null,
+  ytDesc: null,
   savedScenesEpId: null,
 };
 
