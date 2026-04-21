@@ -201,8 +201,12 @@ JSON array format mein SIRF return karo:
     window._ytAllTitles = titles;
     window._ytTitleIdx = 0;
 
+    // Track selected title for description use
+    window._ytSelectedTitle = window._ytAllTitles[0];
+
     function showTitleCard(idx) {
       const t = window._ytAllTitles[idx];
+      const isSelected = (window._ytSelectedTitle === t);
       const card = document.createElement('div');
       card.className = 'yt-output-card';
 
@@ -217,25 +221,65 @@ JSON array format mein SIRF return karo:
       txt.textContent = t;
       card.appendChild(txt);
 
+      // Select indicator
+      const selectInfo = document.createElement('div');
+      selectInfo.id = 'ytSelectInfo_' + idx;
+      selectInfo.style.cssText = 'font-size:10px;padding:4px 8px;border-radius:4px;margin-bottom:6px;text-align:center;' +
+        (isSelected
+          ? 'background:rgba(0,160,0,0.1);border:1px solid rgba(0,160,0,0.3);color:#44bb66;'
+          : 'background:transparent;border:1px solid transparent;color:transparent;');
+      selectInfo.textContent = '✓ Yeh title select hai — description isi se banega';
+      card.appendChild(selectInfo);
+
       const btnRow = document.createElement('div');
-      btnRow.style.cssText = 'display:flex;gap:8px;margin-top:4px;';
+      btnRow.style.cssText = 'display:flex;gap:6px;margin-top:2px;flex-wrap:wrap;';
 
+      // Copy btn
       const copyB = ytCopyBtn(t, '📋 Copy');
-      copyB.style.flex = '1';
+      copyB.style.cssText += ';flex:1;min-width:80px;';
 
+      // Next btn
       const nextB = document.createElement('button');
       nextB.className = 'yt-copy-btn';
-      nextB.style.cssText = 'flex:1;border-color:#553300;color:#ffaa44;';
-      nextB.textContent = '➡️ Alag Title';
+      nextB.style.cssText = 'flex:1;min-width:80px;border-color:#553300;color:#ffaa44;';
+      nextB.textContent = '➡️ Alag';
       nextB.onclick = function() {
         window._ytTitleIdx = (window._ytTitleIdx + 1) % window._ytAllTitles.length;
         out.innerHTML = '';
         out.appendChild(showTitleCard(window._ytTitleIdx));
       };
 
+      // USE THIS button
+      const useB = document.createElement('button');
+      useB.className = 'yt-copy-btn';
+      useB.style.cssText = 'width:100%;margin-top:4px;' +
+        (isSelected
+          ? 'border-color:#006600;color:#44bb66;background:rgba(0,100,0,0.12);'
+          : 'border-color:#004400;color:#228822;');
+      useB.textContent = isSelected ? '✅ Selected' : '✓ Yahi Use Karo';
+      useB.onclick = async function() {
+        window._ytSelectedTitle = t;
+
+        // story title update: "Original Title | YouTube Title"
+        const baseTitle = state.title.split(' | ')[0].trim();
+        const newFullTitle = baseTitle + ' | ' + t;
+        state.title = newFullTitle;
+        state.ytTitle = t;
+        save();
+
+        // episode update in DB
+        await saveCurrentEpisode(true);
+
+        toast('✅ Title select hua! Description generate karo');
+        // Re-render card to show selected state
+        out.innerHTML = '';
+        out.appendChild(showTitleCard(idx));
+      };
+
       btnRow.appendChild(copyB);
       btnRow.appendChild(nextB);
       card.appendChild(btnRow);
+      card.appendChild(useB);
       return card;
     }
 
@@ -367,6 +411,9 @@ PURE HINDI DEVANAGARI mein likho (tags/hashtags English ok hai)`
 
     out.innerHTML = '';
     out.appendChild(card);
+    state.ytDesc = fullCopy;
+    save();
+    await saveCurrentEpisode(true);
     toast('✅ Description ready!');
     _ytSetStatus('desc', true);
     updateYtStatusBadge();
