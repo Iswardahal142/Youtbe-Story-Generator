@@ -20,17 +20,20 @@ let state = {
   savedScenesEpId: null,
 };
 
-// ══ PERSIST — Firebase backed, localStorage fallback ══
+// ══ PERSIST ══
 async function load() {
   const d = await window.db_loadState();
-  if (d) { state = { ...state, ...d }; }
+  if (d) {
+    state = { ...state, ...d };
+    // Purana hardcoded channel name clear karo
+    if (state.channel === 'KAALI RAAT') state.channel = '';
+  }
 }
 
 function save() {
   window.db_saveState({ ...state });
 }
 
-// Episodes — async wrappers
 async function getEpisodes() {
   return await window.db_getEpisodes();
 }
@@ -53,18 +56,19 @@ function goToSetup() {
 function goToThumb() { showScreen('screenThumb'); }
 
 function restoreSetupForm() {
-  // YouTube fetched name ko priority do, phir saved state, phir blank
-  const displayName = window.ytFetchedChannelName || state.channel || '';
   const inp = document.getElementById('cfgChannel');
   if (inp) {
-    inp.value = displayName;
-    inp.placeholder = displayName ? '' : 'Channel ID not set';
+    // YouTube se fetched name hamesha priority
+    const name = window.ytFetchedChannelName || (state.channel !== 'KAALI RAAT' ? state.channel : '') || '';
+    inp.value = name;
+    inp.placeholder = name ? '' : 'Channel ID not set';
   }
   generatedTitle = '';
   generatedPrompt = '';
   document.getElementById('aiGenPreview').style.display = 'none';
   document.getElementById('startBtn').style.display = 'none';
-  document.getElementById('genIdeaBtn').innerHTML = '✦ Generate Idea';
+  const genBtn = document.getElementById('genIdeaBtn');
+  if (genBtn) genBtn.innerHTML = '<span class="sg-gen-icon">✦</span> Generate Story Idea';
   document.getElementById('genTitlePreview').textContent = '';
   renderLinkSeasonBlock();
 }
