@@ -189,12 +189,12 @@ async function ytTabComparison() {
     return;
   }
 
-  // Matching
-  const storyTitle = lastStory.title || '';
-  const storyDesc  = (lastStory.storyChunks || []).map(c => c.text).join(' ').slice(0, 500);
+  // Matching — ytTitle use karo agar available hai (exact YouTube title)
+  const storyTitle    = lastStory.ytTitle || lastStory.title || '';
+  const storyDesc     = lastStory.ytDesc  || (lastStory.storyChunks || []).map(c => c.text).join(' ').slice(0, 500);
 
-  const titleScore = _ytMatchScore(storyTitle, lastVideo.title, '');
-  const descScore  = _ytMatchScore(storyDesc.slice(0, 100), '', lastVideo.description);
+  const titleScore   = _ytMatchScore(storyTitle, lastVideo.title, '');
+  const descScore    = _ytMatchScore(storyDesc.slice(0, 100), '', lastVideo.description);
   const overallScore = _ytMatchScore(storyTitle, lastVideo.title, lastVideo.description);
 
   const titleMatch  = titleScore  >= 50;
@@ -230,7 +230,8 @@ async function ytTabComparison() {
       <div style="width:36px;height:36px;border-radius:8px;background:rgba(120,0,120,0.3);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">📚</div>
       <div style="flex:1;overflow:hidden;">
         <div style="font-size:9px;color:#666;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:2px;">Last Story</div>
-        <div style="font-size:13px;font-weight:700;color:#eee;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${storyTitle}</div>
+        <div style="font-size:13px;font-weight:700;color:#eee;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${lastStory.ytTitle || lastStory.title}</div>
+        ${lastStory.ytTitle ? '<div style="font-size:10px;color:#664444;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Story: ' + lastStory.title.split(' | ')[0] + '</div>' : ''}
         <div style="font-size:10px;color:#554455;margin-top:1px;">${lastStory.season || 'Season 1'} · ${lastStory.epNum || 'EP 01'}</div>
       </div>
     </div>
