@@ -190,7 +190,8 @@ async function openEpisodesScreen(baseTitle, season) {
 
   const rows = sEps.map(ep => {
     const epYtTitle = (ep.title || '').split(' | ')[1] || ep.title || 'Untitled';
-    return '<div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid #0f0000;">' +
+    return '<div onclick="loadEpisode(\'' + ep.id + '\');bnavSetActive(\'generate\');" ' +
+        'style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid #0f0000;cursor:pointer;">' +
       '<div style="flex:1;min-width:0;">' +
         '<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;">' +
           '<span style="font-size:10px;color:#880000;font-weight:700;">' + (ep.epNum || 'EP 01') + '</span>' +
@@ -203,9 +204,8 @@ async function openEpisodesScreen(baseTitle, season) {
       '</div>' +
       '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0;">' +
         '<button id="del_' + ep.id + '" onclick="event.stopPropagation();_deleteEpisode(\'' + ep.id + '\',\'' + safeBase + '\',\'' + safeSeason + '\')" ' +
-          'style="background:transparent;border:1px solid #2a0000;color:#553333;font-size:11px;padding:4px 8px;border-radius:6px;cursor:pointer;">🗑 Delete</button>' +
-        '<button onclick="event.stopPropagation();loadEpisode(\'' + ep.id + '\');bnavSetActive(\'generate\');" ' +
-          'style="background:rgba(180,0,0,0.15);border:1px solid #440000;color:#cc4444;font-size:11px;padding:4px 8px;border-radius:6px;cursor:pointer;">✏️ Edit</button>' +
+          'style="background:transparent;border:1px solid #2a0000;color:#553333;font-size:11px;padding:4px 8px;border-radius:6px;cursor:pointer;">🗑</button>' +
+        '<span style="font-size:18px;color:#444;">›</span>' +
       '</div>' +
     '</div>';
   }).join('');
