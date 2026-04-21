@@ -972,6 +972,26 @@
   </div>
 </div>
 
+<!-- ══════ SCREEN: SEASONS (Level 2) ══════ -->
+<div class="screen" id="screenSeasons">
+  <div class="mini-topbar">
+    <button class="btn btn-icon" onclick="showScreen('screenMyStories')">←</button>
+    <span class="mini-topbar-title" id="seasonsScreenTitle">Seasons</span>
+    <div style="width:36px;"></div>
+  </div>
+  <div class="mystories-content" id="seasonsContent"></div>
+</div>
+
+<!-- ══════ SCREEN: EPISODES (Level 3) ══════ -->
+<div class="screen" id="screenEpisodes">
+  <div class="mini-topbar">
+    <button class="btn btn-icon" id="episodesBackBtn" onclick="showScreen('screenSeasons')">←</button>
+    <span class="mini-topbar-title" id="episodesScreenTitle" style="font-size:12px;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Episodes</span>
+    <div style="width:36px;"></div>
+  </div>
+  <div class="mystories-content" id="episodesContent"></div>
+</div>
+
 <!-- ══════ SCREEN: PROFILE ══════ -->
 <div class="screen" id="screenProfile">
   <div class="mini-topbar">
