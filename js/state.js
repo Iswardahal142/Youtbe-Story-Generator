@@ -1,7 +1,7 @@
 // ══ STATE ══
 let state = {
   apiKey: '',
-  channel: 'KAALI RAAT',
+  channel: '',
   season: 'SEASON 1',
   epNum: 'EP 01',
   title: 'पुरानी हवेली का राज',
@@ -53,12 +53,18 @@ function goToSetup() {
 function goToThumb() { showScreen('screenThumb'); }
 
 function restoreSetupForm() {
-  document.getElementById('cfgChannel').value = state.channel || 'KAALI RAAT';
+  // YouTube fetched name ko priority do, phir saved state, phir blank
+  const displayName = window.ytFetchedChannelName || state.channel || '';
+  const inp = document.getElementById('cfgChannel');
+  if (inp) {
+    inp.value = displayName;
+    inp.placeholder = displayName ? '' : 'Channel ID not set';
+  }
   generatedTitle = '';
   generatedPrompt = '';
   document.getElementById('aiGenPreview').style.display = 'none';
   document.getElementById('startBtn').style.display = 'none';
-  document.getElementById('genIdeaBtn').innerHTML = '✨ AI se Story Idea Generate Karo';
+  document.getElementById('genIdeaBtn').innerHTML = '✦ Generate Idea';
   document.getElementById('genTitlePreview').textContent = '';
   renderLinkSeasonBlock();
 }
@@ -66,9 +72,9 @@ function restoreSetupForm() {
 // ══ GENRE CHIP ══
 let selectedGenre = 'any';
 document.addEventListener('DOMContentLoaded', () => {
-  document.querySelectorAll('#genreChips .chip').forEach(c => {
+  document.querySelectorAll('#genreChips .sg-chip').forEach(c => {
     c.addEventListener('click', () => {
-      document.querySelectorAll('#genreChips .chip').forEach(x => x.classList.remove('active'));
+      document.querySelectorAll('#genreChips .sg-chip').forEach(x => x.classList.remove('active'));
       c.classList.add('active');
       selectedGenre = c.dataset.g;
     });
