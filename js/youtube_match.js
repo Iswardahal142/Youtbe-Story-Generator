@@ -307,6 +307,81 @@ function _ytInjectChecklist(itemId, matched, defaultLabel, matchLabel, noMatchLa
   // Progress bar update karo
   if (typeof updateYtCheckProgress === 'function') updateYtCheckProgress();
 }
+// ══════════════════════════════════════════════
+// 3. MY STORIES — per-episode YT upload badge
+// ══════════════════════════════════════════════
+async function ytMatchEpisodes() {
+  // Saare episode rows jo render hue hain
+  const epNodes = document.querySelectorAll('.ms-ep-yt-status[data-ep-id]');
+  if (!epNodes.length) return;
+
+  let data;
+  try {
+    data = await _fetchYtVideos();
+  } catch (err) {
+    epNodes.forEach(node => {
+      node.innerHTML = '<span class="ms-ep-yt-badge" style="background:rgba(80,0,0,0.3);color:#553333;">❌ Not Uploaded</span>';
+    });
+    return;
+  }
+
+  const { videos } = data;
+  if (!videos?.length) {
+    epNodes.forEach(node => {
+      node.innerHTML = '<span class="ms-ep-yt-badge" style="background:rgba(80,0,0,0.3);color:#553333;">❌ Not Uploaded</span>';
+    });
+    return;
+  }
+
+  // Views ke hisaab se rank
+  const sorted = [...videos].sort((a, b) => (b.viewCount || 0) - (a.viewCount || 0));
+  const rankMap = {};
+  sorted.forEach((v, i) => { rankMap[v.videoId] = i + 1; });
+
+  // All episodes Firestore se ek baar fetch karo
+  let allEps = [];
+  try { allEps = await window.db_getEpisodes() || []; } catch(e) {}
+  const epById = {};
+  allEps.forEach(e => { epById[e.id] = e; });
+
+  epNodes.forEach(node => {
+    const epId = node.dataset.epId;
+    const ep   = epById[epId];
+    if (!ep) {
+      node.innerHTML = '<span class="ms-ep-yt-badge" style="background:rgba(80,0,0,0.3);color:#553333;">❌ Not Uploaded</span>';
+      return;
+    }
+
+    // Match karo episode ka ytTitle ya title se
+    const matchTitle = ep.ytTitle || (ep.title || '').split(' | ')[1] || ep.title || '';
+    let bestScore = 0, bestVideo = null;
+    videos.forEach(v => {
+      const score = _ytMatchScore(matchTitle, v.title, v.description);
+      if (score > bestScore) { bestScore = score; bestVideo = v; }
+    });
+
+    if (bestVideo && bestScore >= 40) {
+      const rank       = rankMap[bestVideo.videoId] || '--';
+      const rankLabel  = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `#${rank}`;
+      const rankColor  = rank === 1 ? '#ffcc00' : rank <= 3 ? '#ff8844' : rank <= 10 ? '#aaaaaa' : '#666';
+      node.innerHTML =
+        '<a href="https://youtube.com/watch?v=' + bestVideo.videoId + '" target="_blank" onclick="event.stopPropagation()" style="text-decoration:none;display:inline-flex;align-items:center;gap:4px;">' +
+          '<span class="ms-ep-yt-badge" style="background:rgba(200,0,0,0.15);color:#ff4444;">▶ ' + _ytFormatViews(bestVideo.viewCount) + ' views</span>' +
+          '<span style="font-size:10px;font-weight:800;color:' + rankColor + ';">' + rankLabel + '</span>' +
+        '</a>';
+    } else {
+      node.innerHTML = '<span class="ms-ep-yt-badge" style="background:rgba(80,0,0,0.3);color:#553333;">❌ Not Uploaded</span>';
+    }
+  });
+}
+
+window.ytMatchEpisodes = ytMatchEpisodes;
+
 // app.js ke bnavGo('youtube') ya goToYtExport ke baad call hoga
 window.ytTabComparison  = ytTabComparison;
 window.ytMatchMyStories = ytMatchMyStories;
+
+// ── app.js ke liye expose karo ──
+window._fetchYtVideos  = _fetchYtVideos;
+window._ytMatchScore   = _ytMatchScore;
+window._ytFormatViews  = _ytFormatViews;
