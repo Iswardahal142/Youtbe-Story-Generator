@@ -190,7 +190,7 @@ async function openEpisodesScreen(baseTitle, season) {
 
   const rows = sEps.map(ep => {
     const epYtTitle = (ep.title || '').split(' | ')[1] || ep.title || 'Untitled';
-    return '<div onclick="loadEpisode(\'' + ep.id + '\');bnavSetActive(\'generate\');" ' +
+    return '<div class="ms-ep-load-row" data-ep-id="' + ep.id + '" ' +
         'style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid #0f0000;cursor:pointer;">' +
       '<div style="flex:1;min-width:0;">' +
         '<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;">' +
@@ -203,7 +203,7 @@ async function openEpisodesScreen(baseTitle, season) {
         '</div>' +
       '</div>' +
       '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0;">' +
-        '<button id="del_' + ep.id + '" onclick="event.stopPropagation();_deleteEpisode(\'' + ep.id + '\',\'' + safeBase + '\',\'' + safeSeason + '\')" ' +
+        '<button class="ms-ep-del-btn" data-ep-id="' + ep.id + '" data-base="' + safeBase + '" data-season="' + safeSeason + '" ' +
           'style="background:transparent;border:1px solid #2a0000;color:#553333;font-size:11px;padding:4px 8px;border-radius:6px;cursor:pointer;">🗑</button>' +
         '<span style="font-size:18px;color:#444;">›</span>' +
       '</div>' +
@@ -212,6 +212,20 @@ async function openEpisodesScreen(baseTitle, season) {
 
   container.innerHTML = '<div style="padding-bottom:80px;">' + rows + '</div>';
   _fillEpisodeYtBadges(sEps).catch(() => {});
+
+  // Event delegation — inline onclick quoting issues se bachne ke liye
+  container.querySelectorAll('.ms-ep-load-row').forEach(row => {
+    row.addEventListener('click', function() {
+      const id = this.dataset.epId;
+      if (id) { loadEpisode(id); bnavSetActive('generate'); }
+    });
+  });
+  container.querySelectorAll('.ms-ep-del-btn').forEach(btn => {
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      _deleteEpisode(this.dataset.epId, this.dataset.base, this.dataset.season);
+    });
+  });
 }
 
 async function _fillEpisodeYtBadges(sEps) {
