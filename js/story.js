@@ -18,9 +18,30 @@ async function _checkLastEpUploaded() {
   try {
     const eps = await window.db_getEpisodes();
     if (!eps || !eps.length) return true; // Pehli story — allow karo
-    const last = eps[0]; // Most recent
-    return await _isEpisodeUploaded(last);
-  } catch { return true; }
+    const last = eps[0];
+
+    // youtube_match.js se directly call karo
+    if (!window._fetchYtVideos || !window._ytMatchScore) {
+      toast('⚠️ YouTube match system load nahi hua, refresh karo!');
+      return false;
+    }
+    const data = await window._fetchYtVideos();
+    const { videos } = data || {};
+    if (!videos || !videos.length) {
+      toast('⚠️ YouTube channel connect nahi hai ya videos nahi hain!');
+      return false;
+    }
+    const matchTitle = last.ytTitle || (last.title || '').split(' | ')[1] || last.title || '';
+    let best = 0;
+    videos.forEach(v => {
+      const s = window._ytMatchScore(matchTitle, v.title, v.description);
+      if (s > best) best = s;
+    });
+    return best >= 40;
+  } catch (err) {
+    toast('❌ Upload check fail: ' + (err.message || 'Unknown error'));
+    return false;
+  }
 }
 
 async function generateAiStoryIdea() {
