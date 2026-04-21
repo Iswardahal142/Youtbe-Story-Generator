@@ -549,9 +549,58 @@ function goToYtExport() {
   if (window.bnavSetActive) bnavSetActive('youtube');
   renderYtChecklist();
   if (window.updateYtStatusBadge) updateYtStatusBadge();
+  // Refresh ke baad saved title/desc restore karke show karo
+  _ytRestoreSavedOutputs();
   setTimeout(function() {
     if (window.ytTabComparison) window.ytTabComparison().catch(function(){});
   }, 300);
+}
+
+// Saved ytTitle/ytDesc ko YouTube tab mein restore karo
+function _ytRestoreSavedOutputs() {
+  // Title restore
+  if (state.ytTitle) {
+    const titlesOut = document.getElementById('ytTitlesOut');
+    if (titlesOut && !titlesOut.querySelector('.yt-output-card')) {
+      const card = document.createElement('div');
+      card.className = 'yt-output-card';
+      const eyebrow = document.createElement('div');
+      eyebrow.style.cssText = 'font-size:10px;color:#44bb66;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;';
+      eyebrow.textContent = '✅ Saved Title';
+      const txt = document.createElement('div');
+      txt.style.cssText = 'font-size:15px;font-weight:700;color:var(--bone);line-height:1.5;padding:10px 0;';
+      txt.textContent = state.ytTitle;
+      const info = document.createElement('div');
+      info.style.cssText = 'font-size:10px;padding:4px 8px;border-radius:4px;margin-bottom:6px;text-align:center;background:rgba(0,160,0,0.1);border:1px solid rgba(0,160,0,0.3);color:#44bb66;';
+      info.textContent = '✓ Yeh title select hai — description isi se banega';
+      const copyB = ytCopyBtn(state.ytTitle, '📋 Copy');
+      card.appendChild(eyebrow);
+      card.appendChild(txt);
+      card.appendChild(info);
+      card.appendChild(copyB);
+      titlesOut.innerHTML = '';
+      titlesOut.appendChild(card);
+    }
+  }
+  // Description restore
+  if (state.ytDesc) {
+    const descOut = document.getElementById('ytDescOut');
+    if (descOut && !descOut.querySelector('.yt-output-card')) {
+      const card = document.createElement('div');
+      card.className = 'yt-output-card';
+      const lbl = document.createElement('div');
+      lbl.style.cssText = 'font-size:10px;color:#4488ff;letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;';
+      lbl.textContent = '📝 Saved Description';
+      const box = document.createElement('div');
+      box.className = 'yt-desc-box';
+      box.textContent = state.ytDesc;
+      card.appendChild(lbl);
+      card.appendChild(box);
+      card.appendChild(ytCopyBtn(state.ytDesc, '📋 Copy'));
+      descOut.innerHTML = '';
+      descOut.appendChild(card);
+    }
+  }
 }
 
 // ══ YT UPLOAD STATUS TRACKING ══
