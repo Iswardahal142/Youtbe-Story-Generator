@@ -75,7 +75,7 @@ async function renderMyStories() {
       seasonListHtml += '<div style="font-size:9px;letter-spacing:2px;color:#660000;text-transform:uppercase;margin-bottom:4px;">' + season + '</div>';
       sorted.forEach(ep => {
         const epYtTitle = (ep.title || '').split(' | ')[1] || (ep.title || '');
-        seasonListHtml += '<div class="ep-row" onclick="loadEpisode('' + ep.id + ''); bnavSetActive('generate');" style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:6px;background:rgba(255,255,255,0.02);border:1px solid #1a0000;margin-bottom:4px;cursor:pointer;">';
+        seasonListHtml += '<div class="ep-row" onclick="loadEpisode(\'' + ep.id + '\'); bnavSetActive(\'generate\');" style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:6px;background:rgba(255,255,255,0.02);border:1px solid #1a0000;margin-bottom:4px;cursor:pointer;">';
         seasonListHtml += '<span style="font-size:10px;color:#880000;font-weight:700;flex-shrink:0;">' + (ep.epNum || 'EP 01') + '</span>';
         seasonListHtml += '<span style="font-size:11px;color:#bbb;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + epYtTitle + '</span>';
         seasonListHtml += '<span style="font-size:9px;color:' + (ep.ended ? '#44bb66' : '#555') + ';">' + (ep.ended ? '✓' : '…') + '</span>';
@@ -85,7 +85,7 @@ async function renderMyStories() {
     });
 
     return '<div class="story-card" id="' + cardId + '">' +
-      '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;" onclick="_toggleStoryCard('' + cardId + '')">' +
+      '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;" onclick="_toggleStoryCard(\'' + cardId + '\')">' +
         '<div style="flex:1;">' +
           '<div class="story-card-title">' + baseTitle + '</div>' +
           '<div class="story-card-meta" style="margin-top:4px;">' +
@@ -96,7 +96,7 @@ async function renderMyStories() {
           '<div class="story-card-words" style="margin-top:4px;">' + words.toLocaleString() + ' words · ' + dateStr + '</div>' +
         '</div>' +
         '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">' +
-          '<button class="ep-row-del" onclick="deleteStory(event,'' + baseTitle + ''); renderMyStories();">🗑</button>' +
+          '<button class="ep-row-del" onclick="deleteStory(event,\'' + baseTitle + '\'); renderMyStories();">🗑</button>' +
           '<span style="font-size:11px;color:#444;" id="' + cardId + '_arrow">▼</span>' +
         '</div>' +
       '</div>' +
@@ -155,26 +155,27 @@ function bnavGo(tab) {
   }
 }
 
-// Auto-highlight correct tab when screens change via other buttons
-document.addEventListener('DOMContentLoaded', () => {
-  const _patch = () => {
-    const orig = window.showScreen;
-    if (!orig) return setTimeout(_patch, 100);
-    window.showScreen = function(id) {
-      orig(id);
-      if (id === 'screenSetup' || id === 'screenStory') bnavSetActive('generate');
-      else if (id === 'screenMyStories') bnavSetActive('stories');
-      else if (id === 'screenYoutube')   bnavSetActive('youtube');
-      else if (id === 'screenProfile')   bnavSetActive('profile');
-    };
+// ══ showScreen PATCH — DOMContentLoaded hataaya, defer scripts mein zaroorat nahi ══
+(function _patchShowScreen() {
+  const orig = window.showScreen;
+  if (!orig) return setTimeout(_patchShowScreen, 50);
+  window.showScreen = function(id) {
+    orig(id);
+    if (id === 'screenSetup' || id === 'screenStory') bnavSetActive('generate');
+    else if (id === 'screenMyStories') bnavSetActive('stories');
+    else if (id === 'screenYoutube')   bnavSetActive('youtube');
+    else if (id === 'screenProfile')   bnavSetActive('profile');
   };
-  _patch();
-});
+})();
 
 // ══ INIT ══
 // Firebase auth ready hone ke baad call hoga (firebase.js triggers this)
 async function _appLoad() {
   await load();
+  // Channel name window pe set karo taaki restoreSetupForm ko mile
+  if (state.channel && !window.ytFetchedChannelName) {
+    window.ytFetchedChannelName = state.channel;
+  }
   restoreSetupForm();
   renderSetupEpList();
   // Show YT status dot on load
