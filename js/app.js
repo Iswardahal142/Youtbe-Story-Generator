@@ -45,46 +45,81 @@ async function renderMyStories() {
     return;
   }
 
-  // Group by title
+  // Group by BASE title (pehla part before |)
   const groups = {};
   eps.slice().reverse().forEach(ep => {
-    const key = ep.title || 'Untitled';
-    if (!groups[key]) groups[key] = [];
-    groups[key].push(ep);
+    const baseTitle = (ep.title || 'Untitled').split(' | ')[0].trim();
+    if (!groups[baseTitle]) groups[baseTitle] = [];
+    groups[baseTitle].push(ep);
   });
 
-  container.innerHTML = Object.entries(groups).map(([title, epList]) => {
-    const seasons   = [...new Set(epList.map(e => e.season))].join(', ');
-    const totalEps  = epList.length;
-    const latest    = epList[0];
-    const allDone   = epList.every(e => e.ended);
-    const words     = epList.reduce((s, e) => s + (e.wordCount || 0), 0);
-    const dateStr   = latest.savedAt ? new Date(latest.savedAt).toLocaleDateString('hi-IN') : '';
-    return `
-      <div class="story-card" data-story-title="${title}" onclick="loadEpisode('${latest.id}'); bnavSetActive('generate');">
-        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">
-          <div class="story-card-title" style="flex:1;">${title}</div>
-          <button class="ep-row-del" onclick="deleteStory(event,'${title}'); renderMyStories();">🗑</button>
-        </div>
-        <div class="story-card-meta">
-          <span class="scene-tag">${seasons}</span>
-          <span class="scene-tag">${totalEps} ep${totalEps > 1 ? 's' : ''}</span>
-          <span class="scene-tag" style="color:${allDone ? '#44bb66' : '#cc8822'};border-color:${allDone ? '#1a4a22' : '#3a2200'};">${allDone ? '✅ Complete' : '🔄 Ongoing'}</span>
-        </div>
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:4px;">
-          <div class="story-card-words">${words.toLocaleString()} words · ${dateStr}</div>
-          <div class="yt-views-badge" style="font-size:11px;color:#555;">
-            <span style="color:#333;font-size:10px;">▶ loading...</span>
-          </div>
-        </div>
-      </div>
-    `;
-  }).join('');
+  const cards = Object.entries(groups).map(([baseTitle, epList]) => {
+    const seasonMap = {};
+    epList.forEach(ep => {
+      const s = ep.season || 'SEASON 1';
+      if (!seasonMap[s]) seasonMap[s] = [];
+      seasonMap[s].push(ep);
+    });
+    const totalSeasons = Object.keys(seasonMap).length;
+    const totalEps     = epList.length;
+    const latest       = epList[0];
+    const words        = epList.reduce((s, e) => s + (e.wordCount || 0), 0);
+    const dateStr      = latest.savedAt ? new Date(latest.savedAt).toLocaleDateString('hi-IN') : '';
+    const allDone      = epList.every(e => e.ended);
+    const cardId       = 'sc_' + Math.random().toString(36).slice(2,8);
 
-  // Auto-match YouTube views (silent — no loading state needed on card)
+    let seasonListHtml = '';
+    Object.entries(seasonMap).forEach(([season, sEps]) => {
+      const sorted = sEps.slice().sort((a,b) => (a.epNum||'').localeCompare(b.epNum||''));
+      seasonListHtml += '<div style="margin-bottom:8px;">';
+      seasonListHtml += '<div style="font-size:9px;letter-spacing:2px;color:#660000;text-transform:uppercase;margin-bottom:4px;">' + season + '</div>';
+      sorted.forEach(ep => {
+        const epYtTitle = (ep.title || '').split(' | ')[1] || (ep.title || '');
+        seasonListHtml += '<div class="ep-row" onclick="loadEpisode('' + ep.id + ''); bnavSetActive('generate');" style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:6px;background:rgba(255,255,255,0.02);border:1px solid #1a0000;margin-bottom:4px;cursor:pointer;">';
+        seasonListHtml += '<span style="font-size:10px;color:#880000;font-weight:700;flex-shrink:0;">' + (ep.epNum || 'EP 01') + '</span>';
+        seasonListHtml += '<span style="font-size:11px;color:#bbb;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + epYtTitle + '</span>';
+        seasonListHtml += '<span style="font-size:9px;color:' + (ep.ended ? '#44bb66' : '#555') + ';">' + (ep.ended ? '✓' : '…') + '</span>';
+        seasonListHtml += '</div>';
+      });
+      seasonListHtml += '</div>';
+    });
+
+    return '<div class="story-card" id="' + cardId + '">' +
+      '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;" onclick="_toggleStoryCard('' + cardId + '')">' +
+        '<div style="flex:1;">' +
+          '<div class="story-card-title">' + baseTitle + '</div>' +
+          '<div class="story-card-meta" style="margin-top:4px;">' +
+            '<span class="scene-tag">' + totalSeasons + ' Season' + (totalSeasons > 1 ? 's' : '') + '</span>' +
+            '<span class="scene-tag">' + totalEps + ' Ep' + (totalEps > 1 ? 's' : '') + '</span>' +
+            '<span class="scene-tag" style="color:' + (allDone ? '#44bb66' : '#cc8822') + ';border-color:' + (allDone ? '#1a4a22' : '#3a2200') + ';">' + (allDone ? '✅ Complete' : '🔄 Ongoing') + '</span>' +
+          '</div>' +
+          '<div class="story-card-words" style="margin-top:4px;">' + words.toLocaleString() + ' words · ' + dateStr + '</div>' +
+        '</div>' +
+        '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">' +
+          '<button class="ep-row-del" onclick="deleteStory(event,'' + baseTitle + ''); renderMyStories();">🗑</button>' +
+          '<span style="font-size:11px;color:#444;" id="' + cardId + '_arrow">▼</span>' +
+        '</div>' +
+      '</div>' +
+      '<div id="' + cardId + '_list" style="display:none;margin-top:10px;border-top:1px solid #1a0000;padding-top:10px;">' +
+        seasonListHtml +
+      '</div>' +
+    '</div>';
+  });
+
+  container.innerHTML = cards.join('');
+
   if (window.ytMatchMyStories) {
     window.ytMatchMyStories().catch(() => {});
   }
+}
+
+function _toggleStoryCard(cardId) {
+  const list  = document.getElementById(cardId + '_list');
+  const arrow = document.getElementById(cardId + '_arrow');
+  if (!list) return;
+  const open = list.style.display !== 'none';
+  list.style.display  = open ? 'none' : 'block';
+  if (arrow) arrow.textContent = open ? '▼' : '▲';
 }
 
 // ══ BOTTOM NAV ══
