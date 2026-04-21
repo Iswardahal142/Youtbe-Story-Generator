@@ -177,7 +177,7 @@ async function openEpisodesScreen(baseTitle, season) {
     .filter(e => (e.title || 'Untitled').split(' | ')[0].trim() === baseTitle && (e.season || 'SEASON 1') === season)
     .sort((a, b) => (a.epNum || '').localeCompare(b.epNum || ''));
 
-  const ytHeader = sEps.find(e => e.ytTitle) ? sEps.find(e => e.ytTitle).ytTitle : season;
+  const ytHeader = (sEps.find(e => e.ytTitle) || {}).ytTitle || season;
   document.getElementById('episodesScreenTitle').textContent = ytHeader;
   document.getElementById('episodesBackBtn').onclick = function() { openSeasonsScreen(baseTitle); };
 
@@ -185,12 +185,9 @@ async function openEpisodesScreen(baseTitle, season) {
   container.innerHTML = '<div class="mystories-empty"><span class="empty-icon">⏳</span>Loading...</div>';
   showScreen('screenEpisodes');
 
-  const safeBase   = baseTitle.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-  const safeSeason = season.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-
   const rows = sEps.map(ep => {
     const epYtTitle = (ep.title || '').split(' | ')[1] || ep.title || 'Untitled';
-    return '<div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid #0f0000;">' +
+    return '<div class="ms-ep-row" data-ep-id="' + ep.id + '" style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid #0f0000;cursor:pointer;">' +
       '<div style="flex:1;min-width:0;">' +
         '<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;">' +
           '<span style="font-size:10px;color:#880000;font-weight:700;">' + (ep.epNum || 'EP 01') + '</span>' +
@@ -198,20 +195,35 @@ async function openEpisodesScreen(baseTitle, season) {
         '</div>' +
         '<div style="font-size:13px;color:#ddd;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + epYtTitle + '</div>' +
         '<div class="ms-ep-yt-status" data-ep-id="' + ep.id + '" style="margin-top:4px;">' +
-          '<span style="font-size:10px;color:#444;">⏳ Checking YouTube...</span>' +
+          '<span style="font-size:10px;color:#444;">⏳ Checking...</span>' +
         '</div>' +
       '</div>' +
-      '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0;">' +
-        '<button id="del_' + ep.id + '" onclick="event.stopPropagation();_deleteEpisode(\'' + ep.id + '\',\'' + safeBase + '\',\'' + safeSeason + '\')" ' +
-          'style="background:transparent;border:1px solid #2a0000;color:#553333;font-size:11px;padding:4px 8px;border-radius:6px;cursor:pointer;">🗑 Delete</button>' +
-        '<button onclick="event.stopPropagation();loadEpisode(\'' + ep.id + '\');bnavSetActive(\'generate\');" ' +
-          'style="background:rgba(180,0,0,0.15);border:1px solid #440000;color:#cc4444;font-size:11px;padding:4px 8px;border-radius:6px;cursor:pointer;">✏️ Edit</button>' +
-      '</div>' +
+      '<button class="ms-del-btn" data-ep-id="' + ep.id + '" style="flex-shrink:0;background:transparent;border:1px solid #2a0000;color:#553333;font-size:12px;padding:6px 10px;border-radius:6px;cursor:pointer;">🗑</button>' +
     '</div>';
   }).join('');
 
   container.innerHTML = '<div style="padding-bottom:80px;">' + rows + '</div>';
-  _fillEpisodeYtBadges(sEps).catch(() => {});
+
+  // Click handlers — no inline onclick, no string escaping issues
+  container.querySelectorAll('.ms-ep-row').forEach(function(row) {
+    row.addEventListener('click', async function(e) {
+      if (e.target.classList.contains('ms-del-btn')) return;
+      const id = this.dataset.epId;
+      if (id) {
+        await loadEpisode(id);
+        bnavSetActive('generate');
+      }
+    });
+  });
+
+  container.querySelectorAll('.ms-del-btn').forEach(function(btn) {
+    btn.addEventListener('click', async function(e) {
+      e.stopPropagation();
+      await _deleteEpisode(this.dataset.epId, baseTitle, season);
+    });
+  });
+
+  _fillEpisodeYtBadges(sEps).catch(function() {});
 }
 
 async function _fillEpisodeYtBadges(sEps) {
@@ -264,18 +276,50 @@ async function _fillEpisodeYtBadges(sEps) {
 
 // ── Delete single episode ──
 async function _deleteEpisode(epId, baseTitle, season) {
-  const ep = await window.db_getEpisode(epId);
-  if (ep) {
-    const uploaded = await _isEpisodeUploaded(ep);
-    if (uploaded) {
-      toast('❌ YouTube pe upload hai — delete nahi kar sakte!');
-      return;
+  // Upload check — sirf tab block karo jab YouTube se confirmed match ho
+  try {
+    if (window._fetchYtVideos && window._ytMatchScore) {
+      const data = await window._fetchYtVideos();
+      const videos = (data || {}).videos || [];
+      if (videos.length) {
+        const ep = await window.db_getEpisode(epId);
+        if (ep) {
+          const matchTitle = ep.ytTitle || (ep.title || '').split(' | ')[1] || ep.title || '';
+          let best = 0;
+          videos.forEach(function(v) {
+            const s = window._ytMatchScore(matchTitle, v.title, v.description);
+            if (s > best) best = s;
+          });
+          if (best >= 40) {
+            toast('❌ YouTube pe upload hai — delete nahi kar sakte!');
+            return;
+          }
+        }
+      }
     }
-  }
-  if (!confirm('Is episode ko delete karo?')) return;
+  } catch(e) { /* ignore — allow delete */ }
+
   await window.db_deleteEpisode(epId);
   toast('🗑 Episode delete ho gaya');
-  openEpisodesScreen(baseTitle, season);
+
+  // Navigate after delete
+  const remaining = await window.db_getEpisodes();
+  const seasonEps = remaining.filter(function(e) {
+    return (e.title || '').split(' | ')[0].trim() === baseTitle && (e.season || 'SEASON 1') === season;
+  });
+  if (!seasonEps.length) {
+    const storyEps = remaining.filter(function(e) {
+      return (e.title || '').split(' | ')[0].trim() === baseTitle;
+    });
+    if (!storyEps.length) {
+      showScreen('screenMyStories');
+      renderMyStories();
+    } else {
+      openSeasonsScreen(baseTitle);
+    }
+  } else {
+    openEpisodesScreen(baseTitle, season);
+  }
 }
 
 // ══ BOTTOM NAV ══
