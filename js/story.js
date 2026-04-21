@@ -70,6 +70,7 @@ async function generateAiStoryIdea() {
     return;
   }
 
+  btn.disabled = false;
   btn.innerHTML = '<div class="spinner"></div> Soch raha hai...';
 
   const usedIdeas = await getUsedIdeas();
