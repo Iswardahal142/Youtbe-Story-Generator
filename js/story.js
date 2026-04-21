@@ -150,7 +150,10 @@ No English. Pure Devanagari only.`
     }
 
     if (generatedTitle && generatedPrompt) {
-      document.getElementById('genTitlePreview').textContent = generatedTitle;
+      // Main title (existing) | Generated YT title
+      const mainTitle = state.title ? state.title.split(' | ')[0].trim() : '';
+      const displayTitle = mainTitle ? mainTitle + ' | ' + generatedTitle : generatedTitle;
+      document.getElementById('genTitlePreview').textContent = displayTitle;
       document.getElementById('aiGenPreview').style.display = 'block';
       document.getElementById('startBtn').style.display = 'flex';
       btn.innerHTML = '🔄 Dobara Generate Karo';
@@ -206,7 +209,11 @@ async function startStudio() {
   if (!generatedTitle) { toast('⚠️ Pehle AI se story idea generate karo!'); return; }
 
   state.channel = window.ytFetchedChannelName || document.getElementById('cfgChannel').value.trim() || '';
-  state.title = generatedTitle;
+  // Main title prefix: agar pehle se koi story chal rahi hai toh uska base title lelo
+  const _prevMain = state.currentEpId && state.title
+    ? state.title.split(' | ')[0].trim()
+    : '';
+  state.title = _prevMain ? _prevMain + ' | ' + generatedTitle : generatedTitle;
   state.prompt = generatedPrompt;
 
   // Always start fresh at Season 1, EP 01 unless linked season
