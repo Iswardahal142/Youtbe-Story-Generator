@@ -111,6 +111,7 @@ function bnavGo(tab) {
     showScreen('screenYoutube');
     renderYtChecklist();
     if (window.updateYtStatusBadge) updateYtStatusBadge();
+    if (window._ytRestoreSavedOutputs) _ytRestoreSavedOutputs();
     setTimeout(function() {
       if (window.ytTabComparison) window.ytTabComparison().catch(function(){});
     }, 300);
